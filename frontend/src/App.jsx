@@ -15,6 +15,7 @@ import TeacherDashboard from './pages/TeacherDashboard';
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
+  const [adminNotifications, setAdminNotifications] = useState([]);
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
@@ -98,6 +99,14 @@ const App = () => {
       if (data.token) localStorage.setItem('token', data.token);
       const avatar = (data.user.name || data.user.email || 'UU').substring(0, 2).toUpperCase();
       setUser({ ...data.user, avatar });
+      // redirect based on role
+      if (data.user.role === 'admin') {
+        setCurrentPage('admindashboard');
+      } else if (data.user.role === 'teacher') {
+        setCurrentPage('teacher');
+      } else {
+        setCurrentPage('studentdashboard');
+      }
       setShowAuthModal(false);
     } catch (err) {
       alert('Invalid credentials');
@@ -113,6 +122,11 @@ const App = () => {
       password: formData.get('password'),
       role: formData.get('role'),
     };
+    // Prevent admin signup per your requirement
+    if (payload.role === 'admin') {
+      alert('Admin accounts cannot be created via signup.');
+      return;
+    }
     try {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
@@ -124,6 +138,18 @@ const App = () => {
       if (data.token) localStorage.setItem('token', data.token);
       const avatar = (data.user.name || data.user.email || 'UU').substring(0, 2).toUpperCase();
       setUser({ ...data.user, avatar });
+
+      // Notify admin if a teacher signed up
+      if (data.user.role === 'teacher') {
+        setAdminNotifications((prev) => [
+          ...prev,
+          { type: 'teacher_signup', email: data.user.email, time: new Date().toISOString() },
+        ]);
+        setCurrentPage('teacher');
+      } else {
+        // student
+        setCurrentPage('studentdashboard');
+      }
       setShowAuthModal(false);
     } catch (err) {
       alert('Signup failed');
@@ -224,6 +250,7 @@ const App = () => {
         answersByQuestion={answersByQuestion}
         approveAnswer={approveAnswer}
         rejectAnswer={rejectAnswer}
+        adminNotifications={adminNotifications}
       />
 
       {showAuthModal && (
@@ -295,7 +322,7 @@ const App = () => {
         <ManagementPage />
       )}
 
-      {/* Simple About view (no new file created) */}
+     
       {currentPage === 'about' && (
         <div className="container mx-auto px-4 py-8">
           <h2 className="text-2xl font-bold mb-4">About</h2>

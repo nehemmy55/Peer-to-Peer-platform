@@ -12,9 +12,36 @@ export default function ManagementPage() {
             <button className="w-full text-left p-3 hover:bg-gray-50 rounded border">Students</button>
           </div>
         </div>
-
-      
+      </div>
+       <div className="py-16 px-4 bg-gray-50">
+        <div className="container mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Peer to Peer Platform?</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+            <div className="bg-white p-6 rounded-lg shadow text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Peer-to-Peer Learning</h3>
+              <p className="text-gray-600">Learn from your fellow students who understand your perspective and challenges.</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Award className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Recognition & Badges</h3>
+              <p className="text-gray-600">Build your reputation through helpful answers and earn badges.</p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-8 h-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Quality Resources</h3>
+              <p className="text-gray-600">Access curated notes, study guides, and past papers shared by peers.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+   
   );
 }
