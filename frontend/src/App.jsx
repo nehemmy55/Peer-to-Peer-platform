@@ -13,6 +13,7 @@ import SubjectsPage from './pages/SubjectsPage';
 import ManagementPage from './pages/ManagementPage';
 import TeacherDashboard from './pages/TeacherDashboard';
 
+// Update signup payload to include school; fix admin redirect to management
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [adminNotifications, setAdminNotifications] = useState([]);
@@ -121,6 +122,7 @@ const App = () => {
       email: formData.get('email'),
       password: formData.get('password'),
       role: formData.get('role'),
+      school: formData.get('school'),
     };
     // Prevent admin signup per your requirement
     if (payload.role === 'admin') {

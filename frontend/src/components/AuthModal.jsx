@@ -1,3 +1,4 @@
+// Auth modal: remove admin credential button, add full signup fields
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
@@ -5,12 +6,9 @@ export default function AuthModal({ setShowAuthModal, authMode, setAuthMode, han
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('student');
+  const [name, setName] = useState('');
+  const [school, setSchool] = useState('');
   const isLogin = authMode === 'login';
-
-  const useAdminCredentials = () => {
-    setEmail('admin@gmail.com');
-    setPassword('12345');
-  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -22,6 +20,33 @@ export default function AuthModal({ setShowAuthModal, authMode, setAuthMode, han
         <h2 className="text-2xl font-bold mb-6">{isLogin ? 'Login' : 'Sign Up'}</h2>
 
         <form onSubmit={isLogin ? handleLogin : handleSignup} className="space-y-4">
+          {!isLogin && (
+            <>
+              <div>
+                <label className="block text-sm font-medium mb-1">Full Name</label>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">School</label>
+                <input
+                  name="school"
+                  type="text"
+                  required
+                  value={school}
+                  onChange={(e) => setSchool(e.target.value)}
+                  className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+            </>
+          )}
+
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
@@ -65,7 +90,6 @@ export default function AuthModal({ setShowAuthModal, authMode, setAuthMode, han
                 </button>
               </div>
               <input type="hidden" name="role" value={role} />
-              <p className="text-xs text-gray-500 mt-1">Admin signup is disabled.</p>
             </div>
           )}
 
@@ -74,12 +98,9 @@ export default function AuthModal({ setShowAuthModal, authMode, setAuthMode, han
           </button>
 
           {isLogin && (
-            <div className="flex items-center justify-between mt-2">
-              <button type="button" onClick={useAdminCredentials} className="text-sm text-blue-600 hover:underline">
-                Use Admin Credentials
-              </button>
+            <div className="text-center">
               <button onClick={() => setAuthMode('signup')} type="button" className="text-sm text-gray-700 hover:underline">
-                Sign Up
+                Create an account
               </button>
             </div>
           )}

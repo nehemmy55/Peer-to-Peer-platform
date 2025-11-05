@@ -1,3 +1,4 @@
+// User model schema
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
@@ -7,7 +8,9 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ['student', 'teacher', 'admin'], default: 'student' },
     reputation: { type: Number, default: 0 },
-    badge: { type: String, default: 'Newcomer' }
+    badge: { type: String, default: 'Newcomer' },
+    // add school to store signup info
+    school: { type: String, default: '' }
   },
   { timestamps: true }
 );
