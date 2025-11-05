@@ -1,14 +1,21 @@
+import Notification from '../models/Notification.js';
 import express from 'express';
+import User from '../models/User.js'; 
 import Question from '../models/Question.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 import Answer from '../models/Answer.js';
-import User from '../models/User.js';
-import { requireAuth } from '../middleware/auth.js';
+
+
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+// GET all questions (with optional subject filter)
+router.get('/', requireAuth, async (req, res) => {
   const { subject } = req.query;
   const filter = subject && subject !== 'all' ? { subject } : {};
+  if (req.user.role !== 'admin') {
+    filter.verified = true;
+  }
   const items = await Question.find(filter).sort({ createdAt: -1 }).limit(100);
   const withCounts = await Promise.all(
     items.map(async (q) => {
@@ -64,6 +71,20 @@ router.post('/', requireAuth, async (req, res) => {
     console.error('Create question error:', e);
     res.status(500).json({ error: 'Failed to create question' });
   }
+});
+
+// PATCH question status (admin only)
+router.patch('/:id/status', requireAuth, requireRole('admin'), async (req, res) => {
+  const { verified } = req.body;
+  if (typeof verified !== 'boolean') {
+    return res.status(400).json({ error: 'Invalid verified status' });
+  }
+  const { id } = req.params;
+  const updated = await Question.findByIdAndUpdate(id, { verified }, { new: true });
+  if (!updated) {
+    return res.status(404).json({ error: 'Question not found' });
+  }
+  res.json({ ok: true, verified: updated.verified });
 });
 
 export default router;

@@ -1,4 +1,4 @@
-import express from 'express';
+import Notification from '../models/Notification.js';import express from 'express';
 import Answer from '../models/Answer.js';
 import Question from '../models/Question.js';
 import User from '../models/User.js';
@@ -58,6 +58,11 @@ router.post('/', requireAuth, async (req, res) => {
       author: authorName,
       content,
       status: 'pending'
+    });
+
+    // Create a notification for the teacher
+    await Notification.create({
+      message: `New answer from ${authorName} for question "${question.title}"`,
     });
 
     return res.status(201).json({

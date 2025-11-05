@@ -1,11 +1,12 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
-
-import authRoutes from './routes/auth.js';
-import questionRoutes from './routes/questions.js';
-import answerRoutes from './routes/answers.js';
+import authRouter from './routes/auth.js';
+import questionsRouter from './routes/questions.js';
+import answersRouter from './routes/answers.js';
+import contributorsRouter from './routes/contributors.js';
+import notificationsRouter from './routes/notifications.js';
 
 dotenv.config();
 
@@ -13,23 +14,24 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const MONGODB_URI = process.env.MONGODB_URI || '';
-const PORT = process.env.PORT || 3000;
 
-if (!MONGODB_URI) {
-  console.warn('MONGODB_URI not set. Set it in .env to connect to Atlas.');
-} else {
-  mongoose
-    .connect(MONGODB_URI)
-    .then(() => console.log('MongoDB connected'))
-    .catch((err) => console.error('MongoDB connection error', err));
-}
+mongoose.connect(process.env.MONGODB_URI )
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
-// routes
-app.use('/api/auth', authRoutes);
-app.use('/api/questions', questionRoutes);
-app.use('/api/answers', answerRoutes);
+app.use('/api/auth', authRouter);
+app.use('/api/questions', questionsRouter);
+app.use('/api/answers', answersRouter);
+app.use('/api/contributors', contributorsRouter);
+app.use('/api/notifications', notificationsRouter);
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
+const port = process.env.PORT || 5000;
 
-app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
