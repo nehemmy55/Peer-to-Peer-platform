@@ -295,6 +295,16 @@ const App = () => {
         <ManagementPage />
       )}
 
+      {/* Simple About view (no new file created) */}
+      {currentPage === 'about' && (
+        <div className="container mx-auto px-4 py-8">
+          <h2 className="text-2xl font-bold mb-4">About</h2>
+          <p className="text-gray-700">
+            This platform enables peer-to-peer learning. Admins manage users; teachers moderate answers; students ask and contribute.
+          </p>
+        </div>
+      )}
+
       {currentPage === 'teacher' && (
         <TeacherDashboard
           questions={questions}
