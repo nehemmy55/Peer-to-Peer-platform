@@ -364,6 +364,8 @@ const App = () => {
           answersLoading={answersLoading}
         />
       )}
+
+      <Footer />
     </div>
   );
 };
