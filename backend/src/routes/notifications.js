@@ -25,4 +25,26 @@ router.patch('/:id/read', requireAuth, requireRole('teacher'), async (req, res) 
   }
 });
 
+// Student/my notifications
+router.get('/my', requireAuth, async (req, res) => {
+  try {
+    const notifications = await Notification.find({ userId: req.user.id, read: false }).sort({ createdAt: -1 });
+    res.json({ notifications });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+router.patch('/my/:id/read', requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const notif = await Notification.findOne({ _id: id, userId: req.user.id });
+    if (!notif) return res.status(404).json({ error: 'Not found' });
+    await Notification.findByIdAndUpdate(id, { read: true });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to mark notification as read' });
+  }
+});
+
 export default router;

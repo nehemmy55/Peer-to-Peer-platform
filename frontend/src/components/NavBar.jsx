@@ -11,6 +11,8 @@ export default function NavBar({
   user,
   handleLogout,
   adminNotifications,
+  studentNotifications,
+  markStudentNotifRead,
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -19,6 +21,7 @@ export default function NavBar({
     .flatMap(([qid, list]) => (list || []).filter(a => a.status === 'pending').map(a => ({ questionId: qid, ...a })));
   const teacherPendingCount = pendingEntries.length;
   const adminNotifCount = (adminNotifications || []).length;
+  const studentNotifCount = (studentNotifications || []).length;
 
   return (
     <nav className="bg-gray-900 text-white shadow-lg sticky top-0 z-50">
@@ -30,12 +33,12 @@ export default function NavBar({
               <span>Peer to Peer Platform</span>
             </button>
             <div className="hidden md:flex space-x-6">
-              <button onClick={() => setCurrentPage('questions')} className="hover:text-blue-400 transition">Questions</button>
-              <button onClick={() => setCurrentPage('resources')} className="hover:text-blue-400 transition">Resources</button>
+              <button onClick={() => (user ? setCurrentPage('questions') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Questions</button>
+              <button onClick={() => (user ? setCurrentPage('resources') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Resources</button>
               {!(user && user.role === 'teacher') && (
                 <>
-                  <button onClick={() => setCurrentPage('contributors')} className="hover:text-blue-400 transition">Contributors</button>
-                  <button onClick={() => setCurrentPage('subjects')} className="hover:text-blue-400 transition">Subjects</button>
+                  <button onClick={() => (user ? setCurrentPage('contributors') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Contributors</button>
+              <button onClick={() => (user ? setCurrentPage('subjects') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Subjects</button>
                 </>
               )}
               {user && user.role === 'admin' && (
@@ -58,6 +61,7 @@ export default function NavBar({
                   <button className="p-2 hover:bg-gray-800 rounded-full" aria-label="Notifications" onClick={() => setShowNotifications(v => !v)}>
                     <Bell className="w-5 h-5" />
                   </button>
+                  {/* badges */}
                   {user.role === 'teacher' && teacherPendingCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center border-2 border-gray-900">
                       {teacherPendingCount}
@@ -68,6 +72,12 @@ export default function NavBar({
                       {adminNotifCount}
                     </span>
                   )}
+                  {user.role === 'student' && studentNotifCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center border-2 border-gray-900">
+                      {studentNotifCount}
+                    </span>
+                  )}
+
                   {showNotifications && (
                     <div className="absolute right-0 mt-2 w-80 bg-white text-gray-900 rounded shadow-lg z-50">
                       {user.role === 'teacher' ? (
@@ -158,10 +168,10 @@ export default function NavBar({
         {mobileNavOpen && (
           <div className="md:hidden border-t border-gray-800 py-3 space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => { setCurrentPage('questions'); setMobileNavOpen(false); }} className="px-3 py-2 text-left rounded hover:bg-gray-800">Questions</button>
-              <button onClick={() => { setCurrentPage('resources'); setMobileNavOpen(false); }} className="px-3 py-2 text-left rounded hover:bg-gray-800">Resources</button>
-              <button onClick={() => { setCurrentPage('contributors'); setMobileNavOpen(false); }} className="px-3 py-2 text-left rounded hover:bg-gray-800">Contributors</button>
-              <button onClick={() => { setCurrentPage('subjects'); setMobileNavOpen(false); }} className="px-3 py-2 text-left rounded hover:bg-gray-800">Subjects</button>
+              <button onClick={() => (user ? (setCurrentPage('questions'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Questions</button>
+              <button onClick={() => (user ? (setCurrentPage('resources'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Resources</button>
+              <button onClick={() => (user ? (setCurrentPage('contributors'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Contributors</button>
+              <button onClick={() => (user ? (setCurrentPage('subjects'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Subjects</button>
               {user && user.role === 'admin' && (
                 <button onClick={() => { setCurrentPage('admindashboard'); setMobileNavOpen(false); }} className="px-3 py-2 text-left rounded hover:bg-gray-800">Admin Dashboard</button>
               )}

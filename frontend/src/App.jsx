@@ -253,6 +253,8 @@ const App = () => {
         approveAnswer={approveAnswer}
         rejectAnswer={rejectAnswer}
         adminNotifications={adminNotifications}
+        studentNotifications={studentNotifications}
+        markStudentNotifRead={markStudentNotifRead}
       />
 
       {showAuthModal && (
@@ -292,16 +294,11 @@ const App = () => {
       )}
 
       {currentPage === 'resources' && (
-        <ResourcesPage
-          bookQuery={bookQuery}
-          setBookQuery={setBookQuery}
+        <BookSearch
           searchBooks={searchBooks}
+          bookResults={bookResults}
           bookLoading={bookLoading}
           bookError={bookError}
-          bookResults={bookResults}
-          resources={resources}
-          setShowAuthModal={setShowAuthModal}
-          user={user}
         />
       )}
 
@@ -371,3 +368,41 @@ const App = () => {
 };
 
 export default App;
+
+
+const [studentNotifications, setStudentNotifications] = useState([]);
+
+// Fetch my notifications when user logs in
+useEffect(() => {
+  if (!user) { setStudentNotifications([]); return; }
+  const controller = new AbortController();
+  const run = async () => {
+    try {
+      const res = await fetch('/api/notifications/my', {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        signal: controller.signal
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStudentNotifications(data.notifications || []);
+      }
+    } catch {}
+  };
+  run();
+  return () => controller.abort();
+}, [user]);
+
+const markStudentNotifRead = async (id) => {
+  try {
+    const res = await fetch(`/api/notifications/my/${id}/read`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    if (res.ok) {
+      setStudentNotifications(prev => prev.filter(n => n._id !== id));
+    }
+  } catch {}
+};

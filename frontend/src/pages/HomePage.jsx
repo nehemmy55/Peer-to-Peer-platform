@@ -21,7 +21,7 @@ export default function HomePage({ subjects, setSelectedSubject, setCurrentPage,
               <MessageCircle className="w-5 h-5" />
               <span>Ask a Question</span>
             </button>
-            <button onClick={() => setCurrentPage('questions')} className="bg-blue-700 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-800 transition flex items-center justify-center space-x-2 shadow">
+            <button onClick={() => (user ? setCurrentPage('questions') : setShowAuthModal(true))} className="bg-blue-700 text-white px-8 py-3 rounded-full font-semibold hover:bg-blue-800 transition flex items-center justify-center space-x-2 shadow">
               <Users className="w-5 h-5" />
               <span>Browse Questions</span>
             </button>
@@ -52,7 +52,7 @@ export default function HomePage({ subjects, setSelectedSubject, setCurrentPage,
                 <BookOpen className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-bold mb-2">Quality Resources</h3>
-              <p className="text-gray-600">Access curated notes, study guides, and past papers shared by peers.</p>
+              <p className="text-gray-600">Access notes, study guides, and past papers shared by peers.</p>
             </div>
           </div>
         </div>
@@ -63,7 +63,7 @@ export default function HomePage({ subjects, setSelectedSubject, setCurrentPage,
           <h2 className="text-3xl font-bold text-center mb-8">Browse by Subject</h2>
           <div className="flex flex-wrap gap-3 justify-center">
             {subjects.map((s) => (
-              <button key={s} onClick={() => { setSelectedSubject(s); setCurrentPage('questions'); }} className="px-4 py-2 bg-white border rounded-full hover:bg-gray-100">{s}</button>
+              <button key={s} onClick={() => (user ? (setSelectedSubject(s), setCurrentPage('questions')) : setShowAuthModal(true))} className="px-4 py-2 bg-white border rounded-full hover:bg-gray-100">{s}</button>
             ))}
           </div>
         </div>
@@ -80,12 +80,12 @@ export default function HomePage({ subjects, setSelectedSubject, setCurrentPage,
                   {q.verified && <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Verified</span>}
                 </div>
                 <div className="text-sm text-gray-600 mt-2">{q.subject} • {q.author}</div>
-                <button onClick={() => { setSelectedSubject('all'); setCurrentPage('questions'); }} className="mt-3 text-blue-600 hover:underline text-sm">View in Questions</button>
+                <button onClick={() => (user ? (setSelectedSubject('all'), setCurrentPage('questions')) : setShowAuthModal(true))} className="mt-3 text-blue-600 hover:underline text-sm">View in Questions</button>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </div>
+     </div>
   );
 }

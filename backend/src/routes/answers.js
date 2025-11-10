@@ -55,6 +55,7 @@ router.post('/', requireAuth, async (req, res) => {
 
     const created = await Answer.create({
       questionId: question._id,
+      authorId: req.user.id,
       author: authorName,
       content,
       status: 'pending'
@@ -85,6 +86,26 @@ router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res
   const { id } = req.params;
   const updated = await Answer.findByIdAndUpdate(id, { status }, { new: true });
   if (!updated) return res.status(404).json({ error: 'Answer not found' });
+
+  // Notify the student author
+  const question = await Question.findById(updated.questionId).lean();
+  await Notification.create({
+    userId: updated.authorId,
+    type: 'answer_status',
+    message: `Your answer to "${question?.title || 'a question'}" was ${status}.`,
+    meta: { questionId: updated.questionId, answerId: updated._id, status }
+  });
+
+  // Emit real-time event if Socket.IO is available
+  const io = req.app.get('io');
+  if (io && updated.authorId) {
+    io.to(`user:${updated.authorId}`).emit('notification', {
+      type: 'answer_status',
+      message: `Your answer to "${question?.title || 'a question'}" was ${status}.`,
+      meta: { questionId: updated.questionId, answerId: updated._id, status }
+    });
+  }
+
   res.json({ ok: true, status: updated.status });
 });
 

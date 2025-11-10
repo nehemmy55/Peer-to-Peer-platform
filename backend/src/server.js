@@ -10,6 +10,9 @@ import questionsRouter from './routes/questions.js';
 import answersRouter from './routes/answers.js';
 import contributorsRouter from './routes/contributors.js';
 import notificationsRouter from './routes/notifications.js';
+import http from 'http';
+import { Server as SocketIOServer } from 'socket.io';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -72,6 +75,25 @@ app.use((req, res, next) => {
   next();
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+const server = http.createServer(app);
+const io = new SocketIOServer(server, {
+  cors: { origin: '*' }
+});
+app.set('io', io);
+
+io.on('connection', (socket) => {
+  try {
+    const { token } = socket.handshake.auth || {};
+    if (!token) return socket.disconnect(true);
+    const payload = jwt.verify(token, process.env.JWT_SECRET || 'devsecret');
+    const room = `user:${payload.id}`;
+    socket.join(room);
+  } catch {
+    socket.disconnect(true);
+  }
+});
+
+// Replace app.listen with server.listen
+server.listen(process.env.PORT || 5000, () => {
+  console.log('Server running');
 });
