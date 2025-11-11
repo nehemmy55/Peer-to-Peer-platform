@@ -1,4 +1,4 @@
-import Notification from '../models/Notification.js';import express from 'express';
+import express from 'express';
 import Answer from '../models/Answer.js';
 import Question from '../models/Question.js';
 import User from '../models/User.js';
@@ -45,25 +45,17 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Missing questionId or content' });
     }
 
-    // Ensure question exists
     const question = await Question.findById(questionId);
     if (!question) return res.status(404).json({ error: 'Question not found' });
 
-    // Resolve author from authenticated user
     const user = await User.findById(req.user.id).lean();
     const authorName = user?.name || 'Unknown';
 
     const created = await Answer.create({
       questionId: question._id,
-      authorId: req.user.id,
       author: authorName,
       content,
       status: 'pending'
-    });
-
-    // Create a notification for the teacher
-    await Notification.create({
-      message: `New answer from ${authorName} for question "${question.title}"`,
     });
 
     return res.status(201).json({
@@ -80,33 +72,24 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+// PATCH answer status (teacher or admin)
 router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res) => {
-  const { status } = req.body;
-  if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
-  const { id } = req.params;
-  const updated = await Answer.findByIdAndUpdate(id, { status }, { new: true });
-  if (!updated) return res.status(404).json({ error: 'Answer not found' });
-
-  // Notify the student author
-  const question = await Question.findById(updated.questionId).lean();
-  await Notification.create({
-    userId: updated.authorId,
-    type: 'answer_status',
-    message: `Your answer to "${question?.title || 'a question'}" was ${status}.`,
-    meta: { questionId: updated.questionId, answerId: updated._id, status }
-  });
-
-  // Emit real-time event if Socket.IO is available
-  const io = req.app.get('io');
-  if (io && updated.authorId) {
-    io.to(`user:${updated.authorId}`).emit('notification', {
-      type: 'answer_status',
-      message: `Your answer to "${question?.title || 'a question'}" was ${status}.`,
-      meta: { questionId: updated.questionId, answerId: updated._id, status }
-    });
+  try {
+    const { id } = req.params;
+    const { status } = req.body || {};
+    const allowed = ['pending', 'approved', 'rejected'];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status value' });
+    }
+    const updated = await Answer.findByIdAndUpdate(id, { status }, { new: true });
+    if (!updated) {
+      return res.status(404).json({ error: 'Answer not found' });
+    }
+    return res.json({ ok: true, status: updated.status });
+  } catch (e) {
+    console.error('Update answer status error:', e);
+    return res.status(500).json({ error: 'Failed to update answer status' });
   }
-
-  res.json({ ok: true, status: updated.status });
 });
 
 export default router;

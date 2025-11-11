@@ -13,7 +13,6 @@ import SubjectsPage from './pages/SubjectsPage';
 import ManagementPage from './pages/ManagementPage';
 import TeacherDashboard from './pages/TeacherDashboard';
 
-// Update signup payload to include school; fix admin redirect to management
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [adminNotifications, setAdminNotifications] = useState([]);
@@ -36,12 +35,9 @@ const App = () => {
   const [questionsLoading, setQuestionsLoading] = useState(false);
   const [answersLoading, setAnswersLoading] = useState(false);
   const [showQuestionDetailModal, setShowQuestionDetailModal] = useState(false);
+  const [studentNotifications, setStudentNotifications] = useState([]);
 
   const subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'History', 'Literature', 'Computer Science', 'Psychology'];
-
-  useEffect(() => {
-
-  }, []);
 
   // Hydrate user from JWT on app load
   useEffect(() => {
@@ -62,7 +58,54 @@ const App = () => {
       });
   }, []);
 
+  // Fetch questions based on selected subject
+  useEffect(() => {
+    const controller = new AbortController();
+    const run = async () => {
+      try {
+        const qs = selectedSubject && selectedSubject !== 'all' ? `?subject=${encodeURIComponent(selectedSubject)}` : '';
+        const res = await fetch(`/api/questions${qs}`, { signal: controller.signal });
+        if (!res.ok) throw new Error('Failed to load questions');
+        const data = await res.json();
+        const normalized = (data.questions || []).map((q, idx) => ({
+          id: q.id || idx + 1,
+          title: q.title,
+          subject: q.subject,
+          author: q.author,
+          votes: q.votes ?? 0,
+          answers: q.answers ?? 0,
+          verified: !!q.verified,
+          timestamp: q.timestamp ? new Date(q.timestamp).toLocaleString() : '',
+          content: q.content,
+        }));
+        setQuestions(normalized);
+      } catch (e) {
+        // keep demo if backend not ready
+      }
+    };
+    run();
+    return () => controller.abort();
+  }, [selectedSubject]);
 
+  // Fetch student notifications when user logs in
+  useEffect(() => {
+    if (!user) { setStudentNotifications([]); return; }
+    const controller = new AbortController();
+    const run = async () => {
+      try {
+        const res = await fetch('/api/notifications/my', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          signal: controller.signal
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStudentNotifications(data.notifications || []);
+        }
+      } catch {}
+    };
+    run();
+    return () => controller.abort();
+  }, [user]);
 
   const searchBooks = async (query) => {
     if (!query.trim()) {
@@ -102,11 +145,11 @@ const App = () => {
       setUser({ ...data.user, avatar });
       // redirect based on role
       if (data.user.role === 'admin') {
-        setCurrentPage('admindashboard');
+        setCurrentPage('management');
       } else if (data.user.role === 'teacher') {
         setCurrentPage('teacher');
       } else {
-        setCurrentPage('studentdashboard');
+        setCurrentPage('home');
       }
       setShowAuthModal(false);
     } catch (err) {
@@ -150,7 +193,7 @@ const App = () => {
         setCurrentPage('teacher');
       } else {
         // student
-        setCurrentPage('studentdashboard');
+        setCurrentPage('home');
       }
       setShowAuthModal(false);
     } catch (err) {
@@ -164,34 +207,7 @@ const App = () => {
     setCurrentPage('home');
   };
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const run = async () => {
-      try {
-        const qs = selectedSubject && selectedSubject !== 'all' ? `?subject=${encodeURIComponent(selectedSubject)}` : '';
-        const res = await fetch(`/api/questions${qs}`, { signal: controller.signal });
-        if (!res.ok) throw new Error('Failed to load questions');
-        const data = await res.json();
-        const normalized = (data.questions || []).map((q, idx) => ({
-          id: q.id || idx + 1,
-          title: q.title,
-          subject: q.subject,
-          author: q.author,
-          votes: q.votes ?? 0,
-          answers: q.answers ?? 0,
-          verified: !!q.verified,
-          timestamp: q.timestamp ? new Date(q.timestamp).toLocaleString() : '',
-          content: q.content,
-        }));
-        setQuestions(normalized);
-      } catch (e) {
-        // keep demo if backend not ready
-      }
-    };
-    run();
-    return () => controller.abort();
-  }, [selectedSubject]);
-
+  // inside App component
   const approveAnswer = (questionId, answerId) => {
     fetch(`/api/answers/${answerId}/status`, {
       method: 'PATCH',
@@ -201,7 +217,13 @@ const App = () => {
       },
       body: JSON.stringify({ status: 'approved' })
     })
-    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(async (r) => {
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(text || `HTTP ${r.status}`);
+      }
+      return r.json();
+    })
     .then(() => {
       setAnswersByQuestion(prev => {
         const updated = { ...prev };
@@ -224,7 +246,13 @@ const App = () => {
       },
       body: JSON.stringify({ status: 'rejected' })
     })
-    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(async (r) => {
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(text || `HTTP ${r.status}`);
+      }
+      return r.json();
+    })
     .then(() => {
       setAnswersByQuestion(prev => {
         const updated = { ...prev };
@@ -236,6 +264,14 @@ const App = () => {
     .catch(err => {
       console.error('Failed to reject answer:', err);
     });
+  };
+
+  const markStudentNotifRead = (notificationId) => {
+    setStudentNotifications(prev => 
+      prev.map(notif => 
+        notif.id === notificationId ? { ...notif, read: true } : notif
+      )
+    );
   };
 
   return (
@@ -294,11 +330,13 @@ const App = () => {
       )}
 
       {currentPage === 'resources' && (
-        <BookSearch
+        <ResourcesPage
           searchBooks={searchBooks}
           bookResults={bookResults}
           bookLoading={bookLoading}
           bookError={bookError}
+          bookQuery={bookQuery}
+          setBookQuery={setBookQuery}
         />
       )}
 
@@ -321,7 +359,6 @@ const App = () => {
         <ManagementPage />
       )}
 
-     
       {currentPage === 'about' && (
         <div className="container mx-auto px-4 py-8">
           <h2 className="text-2xl font-bold mb-4">About</h2>
@@ -333,8 +370,13 @@ const App = () => {
 
       {currentPage === 'teacher' && (
         <TeacherDashboard
+          currentPage={currentPage}
           questions={questions}
+          subjects={subjects}
           answersByQuestion={answersByQuestion}
+          answersLoading={answersLoading}
+          setAnswersLoading={setAnswersLoading}
+          setAnswersByQuestion={setAnswersByQuestion}
           approveAnswer={approveAnswer}
           rejectAnswer={rejectAnswer}
         />
@@ -353,56 +395,18 @@ const App = () => {
 
       {showQuestionDetailModal && selectedQuestion && (
         <QuestionDetailModal
-          question={selectedQuestion}
-          setShowQuestionDetailModal={setShowQuestionDetailModal}
-          answers={answersByQuestion[selectedQuestion.id] || []}
+          selectedQuestion={selectedQuestion}
+          answersByQuestion={answersByQuestion}
+          setAnswersByQuestion={setAnswersByQuestion}
           user={user}
+          setShowQuestionDetailModal={setShowQuestionDetailModal}
+          setSelectedQuestion={setSelectedQuestion}
           setShowAuthModal={setShowAuthModal}
-          answersLoading={answersLoading}
         />
       )}
-
       <Footer />
     </div>
   );
 };
 
 export default App;
-
-
-const [studentNotifications, setStudentNotifications] = useState([]);
-
-// Fetch my notifications when user logs in
-useEffect(() => {
-  if (!user) { setStudentNotifications([]); return; }
-  const controller = new AbortController();
-  const run = async () => {
-    try {
-      const res = await fetch('/api/notifications/my', {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        signal: controller.signal
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setStudentNotifications(data.notifications || []);
-      }
-    } catch {}
-  };
-  run();
-  return () => controller.abort();
-}, [user]);
-
-const markStudentNotifRead = async (id) => {
-  try {
-    const res = await fetch(`/api/notifications/my/${id}/read`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${localStorage.getItem('token')}`
-      }
-    });
-    if (res.ok) {
-      setStudentNotifications(prev => prev.filter(n => n._id !== id));
-    }
-  } catch {}
-};

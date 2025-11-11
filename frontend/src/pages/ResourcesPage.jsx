@@ -2,6 +2,9 @@ import React from 'react';
 import { Upload } from 'lucide-react';
 
 export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bookLoading, bookError, bookResults, resources, setShowAuthModal, user }) {
+  const safeBookResults = Array.isArray(bookResults) ? bookResults : [];
+  const safeResources = Array.isArray(resources) ? resources : [];
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
@@ -20,9 +23,9 @@ export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bo
         </div>
         {bookLoading && <p className="mt-3 text-gray-600">Searching books...</p>}
         {bookError && <p className="mt-3 text-red-600">{bookError}</p>}
-        {bookResults.length > 0 && (
+        {safeBookResults.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-4">
-            {bookResults.map((b) => {
+            {safeBookResults.map((b) => {
               const info = b.volumeInfo || {};
               return (
                 <div key={b.id} className="bg-gray-50 rounded-lg p-4 border">
@@ -47,7 +50,7 @@ export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bo
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {resources.map((r) => (
+        {safeResources.map((r) => (
           <div key={r.id} className="bg-white rounded-lg shadow p-6">
             <div className="flex items-start justify-between">
               <div>

@@ -11,7 +11,13 @@ export default function QuestionModeration({ questions, setQuestions }) {
       },
       body: JSON.stringify({ verified })
     })
-    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(async (r) => {
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(text || `HTTP ${r.status}`);
+      }
+      return r.json();
+    })
     .then(() => {
       setQuestions(prev => prev.map(q => q.id === id ? { ...q, verified } : q));
     })

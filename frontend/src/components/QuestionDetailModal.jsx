@@ -18,6 +18,11 @@ export default function QuestionDetailModal({
   const questionAnswers = answersByQuestion[selectedQuestion.id] || [];
   const approvedAnswers = questionAnswers.filter(a => a.status === 'approved');
 
+  const myLatestAnswer = user
+    ? [...questionAnswers].reverse().find(a => a.author === user.name)
+    : null;
+  const [showStatusModal, setShowStatusModal] = useState(false);
+
   const handleReplySubmit = async (e) => {
     e.preventDefault();
     if (!replyContent.trim() || !user) {
@@ -134,6 +139,35 @@ export default function QuestionDetailModal({
           <div className="border-t pt-6 text-center">
             <p className="text-gray-600 mb-4">Please log in to answer this question.</p>
             <button onClick={() => { setSelectedQuestion(null); setShowQuestionDetailModal(false); setShowAuthModal(true); }} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Log In</button>
+          </div>
+        )}
+
+        {/* Student status quick view */}
+        {user && myLatestAnswer && (
+          <div className="mb-4">
+            <button
+              className="text-sm text-blue-600 hover:underline"
+              onClick={() => setShowStatusModal(true)}
+            >
+              View Review Status
+            </button>
+            {showStatusModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
+                <div className="bg-white rounded shadow p-4 w-80">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-semibold text-gray-800">Answer Status</div>
+                    <button onClick={() => setShowStatusModal(false)}>
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="text-sm text-gray-700 mb-3">{myLatestAnswer.content}</div>
+                  <div className={`text-xs inline-block px-2 py-1 rounded ${myLatestAnswer.status === 'approved' ? 'bg-green-100 text-green-800' : myLatestAnswer.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    {myLatestAnswer.status}
+                  </div>
+                  <div className="mt-2 text-xs text-gray-600">{myLatestAnswer.timestamp || ''}</div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

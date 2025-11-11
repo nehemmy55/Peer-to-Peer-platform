@@ -1,4 +1,4 @@
-// Auth modal: remove admin credential button, add full signup fields
+
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 

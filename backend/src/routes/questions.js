@@ -11,11 +11,14 @@ const router = express.Router();
 
 // GET all questions (with optional subject filter)
 router.get('/', requireAuth, async (req, res) => {
-  const { subject } = req.query;
+  const { subject, all } = req.query;
   const filter = subject && subject !== 'all' ? { subject } : {};
-  if (req.user.role !== 'admin') {
+
+  // For admins default to verified-only; non-admins see all
+  if (req.user.role === 'admin' && all !== 'true') {
     filter.verified = true;
   }
+
   const items = await Question.find(filter).sort({ createdAt: -1 }).limit(100);
   const withCounts = await Promise.all(
     items.map(async (q) => {

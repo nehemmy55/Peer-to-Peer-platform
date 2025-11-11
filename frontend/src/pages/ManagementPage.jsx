@@ -1,4 +1,5 @@
 import React from 'react';
+import { Users, Award, BookOpen } from 'lucide-react';
 
 export default function ManagementPage() {
   return (
@@ -36,7 +37,7 @@ export default function ManagementPage() {
                 <BookOpen className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-bold mb-2">Quality Resources</h3>
-              <p className="text-gray-600">Access curated notes, study guides, and past papers shared by peers.</p>
+              <p className="text-gray-600">Access  notes, study guides, and past papers shared by peers.</p>
             </div>
           </div>
         </div>
