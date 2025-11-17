@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
+// Modal for viewing question details and answers
 export default function QuestionDetailModal({
   selectedQuestion,
   answersByQuestion,
@@ -23,6 +24,7 @@ export default function QuestionDetailModal({
     : null;
   const [showStatusModal, setShowStatusModal] = useState(false);
 
+  // Submit answer to question
   const handleReplySubmit = async (e) => {
     e.preventDefault();
     if (!replyContent.trim() || !user) {
@@ -142,6 +144,7 @@ export default function QuestionDetailModal({
           </div>
         )}
 
+        {/* Show user's answer status */}
         {user && myLatestAnswer && (
           <div className="mb-4">
             <button

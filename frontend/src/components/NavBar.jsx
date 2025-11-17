@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, Menu, Bell, LogOut } from 'lucide-react';
 
+// Navigation bar component
 export default function NavBar({
   approveAnswer,
   rejectAnswer,
@@ -24,6 +25,7 @@ export default function NavBar({
   const adminNotifCount = (adminNotifications || []).length;
   const studentNotifCount = (studentNotifications || []).length;
 
+  // Handle teacher approval/rejection by admin
   const handleAdminTeacherAction = async (teacherId, action) => {
     try {
       const res = await fetch(`/api/admin/teachers/${teacherId}/${action}`, {
@@ -93,7 +95,7 @@ export default function NavBar({
                   <button className="p-2 hover:bg-gray-800 rounded-full" aria-label="Notifications" onClick={() => setShowNotifications(v => !v)}>
                     <Bell className="w-5 h-5" />
                   </button>
-                  {/* badges */}
+                  {/* Notification badges */}
                   {user.role === 'teacher' && teacherPendingCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center border-2 border-gray-900">
                       {teacherPendingCount}
@@ -110,6 +112,7 @@ export default function NavBar({
                     </span>
                   )}
 
+                  {/* Notifications dropdown */}
                   {showNotifications && (
                     <div className="absolute right-0 mt-2 w-80 bg-white text-gray-900 rounded shadow-lg z-50">
                       {user.role === 'teacher' ? (
@@ -211,6 +214,7 @@ export default function NavBar({
             )}
           </div>
         </div>
+        {/* Mobile navigation menu */}
         {mobileNavOpen && (
           <div className="md:hidden border-t border-gray-800 py-3 space-y-2">
             <div className="grid grid-cols-2 gap-2">

@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
+// Authentication modal component
 export default function AuthModal({ setShowAuthModal, authMode, setAuthMode, handleLogin, handleSignup }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

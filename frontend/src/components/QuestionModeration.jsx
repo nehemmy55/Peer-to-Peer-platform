@@ -1,7 +1,9 @@
 import React from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
+// Component for moderating questions (teacher view)
 export default function QuestionModeration({ questions, setQuestions }) {
+  // Update question verification status
   const updateQuestionStatus = (id, verified) => {
     fetch(`/api/questions/${id}/status`, {
       method: 'PATCH',

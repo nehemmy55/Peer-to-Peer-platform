@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
+// Modal for asking new questions
 export default function QuestionModal({ subjects, setShowQuestionModal, setShowAuthModal, user, setQuestions, setAnswersByQuestion }) {
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState(subjects[0] || 'Mathematics');
@@ -8,6 +9,7 @@ export default function QuestionModal({ subjects, setShowQuestionModal, setShowA
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+  // Submit new question
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
