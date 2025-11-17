@@ -7,6 +7,7 @@ import Answer from '../models/Answer.js';
 
 const router = express.Router();
 
+// Get questions with filtering
 router.get('/', async (req, res) => {
   const { subject, all } = req.query;
   const filter = subject && subject !== 'all' ? { subject } : {};
@@ -30,6 +31,7 @@ router.get('/', async (req, res) => {
   res.json({ questions: withCounts });
 });
 
+// Create new question
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { title, subject, content } = req.body || {};
@@ -64,6 +66,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+// Update question verification status
 router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res) => {
   const { verified } = req.body;
   if (typeof verified !== 'boolean') {
@@ -77,6 +80,7 @@ router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res
   res.json({ ok: true, verified: updated.verified });
 });
 
+// Vote on question
 router.patch('/:id/vote', requireAuth, async (req, res) => {
   const { id } = req.params;
   const { action } = req.body;

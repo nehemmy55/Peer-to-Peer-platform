@@ -1,4 +1,3 @@
-
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -21,6 +20,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Create or update admin user on startup
 const upsertAdmin = async () => {
   try {
     const adminEmail = 'admin@gmail.com';
@@ -84,6 +84,7 @@ const io = new SocketIOServer(server, {
 });
 app.set('io', io);
 
+// Socket.IO connection handling
 io.on('connection', (socket) => {
   try {
     const { token } = socket.handshake.auth || {};

@@ -5,6 +5,7 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
+// User registration
 router.post('/signup', async (req, res) => {
   const { name, email, password, role, school } = req.body;
   try {
@@ -40,6 +41,7 @@ router.post('/signup', async (req, res) => {
   }
 });
 
+// User login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -63,6 +65,7 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Get current user profile
 router.get('/me', async (req, res) => {
   const auth = req.headers.authorization || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;

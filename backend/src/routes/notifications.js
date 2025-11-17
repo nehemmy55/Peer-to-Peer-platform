@@ -4,6 +4,7 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Get unread notifications for teachers
 router.get('/', requireAuth, requireRole('teacher'), async (req, res) => {
   try {
     const notifications = await Notification.find({ read: false }).sort({ createdAt: -1 });
@@ -14,6 +15,7 @@ router.get('/', requireAuth, requireRole('teacher'), async (req, res) => {
   }
 });
 
+// Mark notification as read (teacher)
 router.patch('/:id/read', requireAuth, requireRole('teacher'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -25,6 +27,7 @@ router.patch('/:id/read', requireAuth, requireRole('teacher'), async (req, res) 
   }
 });
 
+// Get current user's notifications
 router.get('/my', requireAuth, async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.id, read: false }).sort({ createdAt: -1 });
@@ -34,6 +37,7 @@ router.get('/my', requireAuth, async (req, res) => {
   }
 });
 
+// Mark user's notification as read
 router.patch('/my/:id/read', requireAuth, async (req, res) => {
   try {
     const { id } = req.params;

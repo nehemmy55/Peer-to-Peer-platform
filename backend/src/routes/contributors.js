@@ -5,6 +5,7 @@ import Answer from '../models/Answer.js';
 
 const router = express.Router();
 
+// Get top contributors leaderboard
 router.get('/', async (req, res) => {
   try {
     const [questionTotals, answerTotals, students] = await Promise.all([

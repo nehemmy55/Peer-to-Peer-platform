@@ -5,6 +5,7 @@ import User from '../models/User.js';
 
 dotenv.config();
 
+// Migration script to add authorId to answers
 async function run() {
   try {
     await mongoose.connect(process.env.MONGODB_URI);

@@ -6,6 +6,7 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Get answers with filtering
 router.get('/', requireAuth, async (req, res) => {
   const { status, subject } = req.query;
   const filter = {};
@@ -37,6 +38,7 @@ router.get('/', requireAuth, async (req, res) => {
   res.json({ answers: normalized });
 });
 
+// Create new answer
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { questionId, content } = req.body || {};
@@ -71,6 +73,7 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
+// Update answer status
 router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res) => {
   try {
     const { id } = req.params;
