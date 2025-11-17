@@ -4,20 +4,17 @@ import User from '../models/User.js';
 
 const router = express.Router();
 
-// GET users list for admin table
+// Get all users with admin access
 router.get('/users', requireAuth, requireRole('admin'), async (req, res) => {
   try {
-    // Explicitly select all fields including password (plain text)
-    const users = await User.find({}).select('name email role status password updatedAt createdAt').sort({ name: 1 }).limit(500).lean();
+    const users = await User.find({}).select('name email role status').sort({ name: 1 }).limit(500).lean();
     const normalized = users.map(u => ({
       id: u._id,
       name: u.name,
       email: u.email,
       role: u.role,
       status: u.status,
-      lastPayment: (u.updatedAt || u.createdAt),
       displayStatus: u.role === 'admin' ? 'Active' : (u.status === 'approved' ? 'Active' : 'Pending'),
-      password: u.password || 'N/A',
     }));
     res.json({ users: normalized });
   } catch (e) {
@@ -26,7 +23,7 @@ router.get('/users', requireAuth, requireRole('admin'), async (req, res) => {
   }
 });
 
-// GET pending teachers for approval
+// Get pending teacher approvals
 router.get('/teachers/pending', requireAuth, requireRole('admin'), async (req, res) => {
   try {
     const teachers = await User.find({ role: 'teacher', status: 'pending' }).sort({ createdAt: -1 }).lean();
@@ -44,7 +41,7 @@ router.get('/teachers/pending', requireAuth, requireRole('admin'), async (req, r
   }
 });
 
-// APPROVE/REJECT teacher
+// Approve or reject teacher
 router.patch('/teachers/:id/:action', requireAuth, requireRole('admin'), async (req, res) => {
   const { id, action } = req.params;
   if (!['approve', 'reject'].includes(action)) {
@@ -66,7 +63,7 @@ router.patch('/teachers/:id/:action', requireAuth, requireRole('admin'), async (
   }
 });
 
-// DELETE user
+// Delete user
 router.delete('/users/:id', requireAuth, requireRole('admin'), async (req, res) => {
   const { id } = req.params;
   

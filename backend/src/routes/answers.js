@@ -37,7 +37,6 @@ router.get('/', requireAuth, async (req, res) => {
   res.json({ answers: normalized });
 });
 
-// Create a new answer
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { questionId, content } = req.body || {};
@@ -72,7 +71,6 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PATCH answer status (teacher or admin)
 router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res) => {
   try {
     const { id } = req.params;

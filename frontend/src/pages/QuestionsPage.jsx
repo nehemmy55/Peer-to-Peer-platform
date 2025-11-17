@@ -1,10 +1,60 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
-export default function QuestionsPage({ questions, selectedSubject, setSelectedSubject, searchQuery, questionsLoading, answersByQuestion, setSelectedQuestion, setShowQuestionDetailModal }) {
+export default function QuestionsPage({ questions, selectedSubject, setSelectedSubject, searchQuery, questionsLoading, answersByQuestion, setSelectedQuestion, setShowQuestionDetailModal, user, setQuestions }) {
+  const [votingQuestions, setVotingQuestions] = useState(new Set());
   const filteredQuestions = questions
     .filter(q => selectedSubject === 'all' || q.subject === selectedSubject)
-    .filter(q => q.title.toLowerCase().includes((searchQuery || '').toLowerCase()));
+    .filter(q => {
+      const query = (searchQuery || '').toLowerCase();
+      return !query || 
+        q.title.toLowerCase().includes(query) || 
+        (q.content && q.content.toLowerCase().includes(query));
+    });
+
+  const handleVote = async (questionId, action) => {
+    if (!user) {
+      alert('Please log in to vote');
+      return;
+    }
+
+    if (votingQuestions.has(questionId)) {
+      return;
+    }
+
+    setVotingQuestions(prev => new Set(prev).add(questionId));
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/questions/${questionId}/vote`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ action })
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to vote');
+      }
+
+      const data = await res.json();
+      
+      setQuestions(prev => prev.map(q => 
+        q.id === questionId ? { ...q, votes: data.votes } : q
+      ));
+    } catch (error) {
+      console.error('Vote error:', error);
+      alert('Failed to vote. Please try again.');
+    } finally {
+      setVotingQuestions(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(questionId);
+        return newSet;
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -16,6 +66,16 @@ export default function QuestionsPage({ questions, selectedSubject, setSelectedS
             <button key={s} onClick={() => setSelectedSubject(s)} className={`px-3 py-2 rounded border ${selectedSubject === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 hover:bg-gray-50'}`}>{s}</button>
           ))}
         </div>
+      </div>
+
+      <div className="mb-6">
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search questions by title or content..."
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+        />
       </div>
 
       {questionsLoading ? (
@@ -42,9 +102,23 @@ export default function QuestionsPage({ questions, selectedSubject, setSelectedS
                 </div>
                 <div className="text-center">
                   <div className="flex items-center space-x-2">
-                    <button className="p-2 hover:bg-gray-100 rounded"><ThumbsUp className="w-5 h-5" /></button>
-                    <span className="font-bold">{q.votes}</span>
-                    <button className="p-2 hover:bg-gray-100 rounded"><ThumbsDown className="w-5 h-5" /></button>
+                    <button 
+                      onClick={() => handleVote(q.id, 'upvote')}
+                      disabled={votingQuestions.has(q.id)}
+                      className="p-2 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      title="Upvote"
+                    >
+                      <ThumbsUp className="w-5 h-5" />
+                    </button>
+                    <span className="font-bold min-w-[2rem]">{q.votes || 0}</span>
+                    <button 
+                      onClick={() => handleVote(q.id, 'downvote')}
+                      disabled={votingQuestions.has(q.id)}
+                      className="p-2 hover:bg-gray-100 rounded disabled:opacity-50 disabled:cursor-not-allowed transition"
+                      title="Downvote"
+                    >
+                      <ThumbsDown className="w-5 h-5" />
+                    </button>
                   </div>
                   <button className="mt-2 text-blue-600 hover:underline" onClick={() => { setSelectedQuestion(q); setShowQuestionDetailModal(true); }}>View Answers ({(answersByQuestion[q.id] || []).filter(a => a.status === 'approved').length})</button>
                 </div>

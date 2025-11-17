@@ -7,13 +7,9 @@ import Answer from '../models/Answer.js';
 
 const router = express.Router();
 
-// GET all questions (with optional subject filter) - public access
 router.get('/', async (req, res) => {
   const { subject, all } = req.query;
   const filter = subject && subject !== 'all' ? { subject } : {};
-
-  // Show all questions regardless of verification status for better visibility
-  // Both verified and unverified questions should appear in recent questions
   const items = await Question.find(filter).sort({ createdAt: -1 }).limit(100);
   const withCounts = await Promise.all(
     items.map(async (q) => {
@@ -34,7 +30,6 @@ router.get('/', async (req, res) => {
   res.json({ questions: withCounts });
 });
 
-// Create a new question
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { title, subject, content } = req.body || {};
@@ -42,7 +37,6 @@ router.post('/', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Missing title, subject, or content' });
     }
 
-    // Get author name from authenticated user
     const user = await User.findById(req.user.id).lean();
     const authorName = user?.name || 'Unknown';
 
@@ -53,7 +47,6 @@ router.post('/', requireAuth, async (req, res) => {
       content
     });
 
-    // Return normalized shape consistent with GET list
     res.status(201).json({
       id: created._id,
       title: created.title,
@@ -71,7 +64,6 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PATCH question status (teacher or admin)
 router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res) => {
   const { verified } = req.body;
   if (typeof verified !== 'boolean') {
@@ -83,6 +75,38 @@ router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res
     return res.status(404).json({ error: 'Question not found' });
   }
   res.json({ ok: true, verified: updated.verified });
+});
+
+router.patch('/:id/vote', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { action } = req.body;
+  
+  if (!['upvote', 'downvote'].includes(action)) {
+    return res.status(400).json({ error: 'Invalid action. Use "upvote" or "downvote"' });
+  }
+  
+  try {
+    const question = await Question.findById(id);
+    if (!question) {
+      return res.status(404).json({ error: 'Question not found' });
+    }
+    
+    if (action === 'upvote') {
+      question.votes = (question.votes || 0) + 1;
+    } else {
+      question.votes = Math.max(0, (question.votes || 0) - 1);
+    }
+    
+    await question.save();
+    
+    res.json({ 
+      ok: true, 
+      votes: question.votes 
+    });
+  } catch (e) {
+    console.error('Vote error:', e);
+    res.status(500).json({ error: 'Failed to update vote' });
+  }
 });
 
 export default router;

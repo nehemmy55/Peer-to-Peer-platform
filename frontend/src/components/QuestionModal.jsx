@@ -46,7 +46,6 @@ export default function QuestionModal({ subjects, setShowQuestionModal, setShowA
       };
       setQuestions((prev) => {
         const updated = [uiQuestion, ...prev];
-        // Update localStorage when new question is added
         localStorage.setItem('questions', JSON.stringify(updated));
         return updated;
       });

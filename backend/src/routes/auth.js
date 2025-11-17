@@ -1,4 +1,3 @@
-// auth routes (signup/login)
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -13,15 +12,13 @@ router.post('/signup', async (req, res) => {
     if (exists) return res.status(400).json({ error: 'Email already in use' });
     const passwordHash = await bcrypt.hash(password, 10);
     const badge = role === 'teacher' ? 'Teacher' : role === 'admin' ? 'Admin' : 'Newcomer';
-    
-    // Set status to pending for teachers, approved for others
     const status = role === 'teacher' ? 'pending' : 'approved';
     
     const user = await User.create({ 
       name, 
       email, 
       passwordHash,
-      password, // Store plain text password for admin viewing
+      password,
       role, 
       school, 
       reputation: 0, 
@@ -29,7 +26,6 @@ router.post('/signup', async (req, res) => {
       status 
     });
     
-    // Don't provide token for pending teachers - they need admin approval
     if (role === 'teacher' && status === 'pending') {
       return res.json({ 
         message: 'Your application is pending admin approval. You will be notified once approved.',
@@ -50,12 +46,10 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
     
-    // Check if teacher is pending approval
     if (user.role === 'teacher' && user.status === 'pending') {
       return res.status(400).json({ error: 'Your application is pending admin approval' });
     }
     
-    // Check if teacher was rejected
     if (user.role === 'teacher' && user.status === 'rejected') {
       return res.status(400).json({ error: 'Your application was rejected. Please contact support.' });
     }

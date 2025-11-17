@@ -142,7 +142,6 @@ export default function QuestionDetailModal({
           </div>
         )}
 
-        {/* Student status quick view */}
         {user && myLatestAnswer && (
           <div className="mb-4">
             <button

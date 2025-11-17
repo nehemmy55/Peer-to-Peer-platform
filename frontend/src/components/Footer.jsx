@@ -5,6 +5,7 @@ export default function Footer() {
     <footer className="bg-gray-900 text-gray-300 mt-12">
       <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div className="text-sm">© {new Date().getFullYear()} Peer to Peer Platform</div>
+        <div className="text-sm">Developed by <a href="https://github.com/Nehemmy55" className="hover:text-white">Nehemie</a></div>
         <div className="flex flex-wrap gap-4 text-sm">
           <a href="#" className="hover:text-white">About</a>
           <a href="#" className="hover:text-white">Privacy</a>

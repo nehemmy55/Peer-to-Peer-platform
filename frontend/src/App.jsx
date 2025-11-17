@@ -22,7 +22,6 @@ const App = () => {
   const [authMode, setAuthMode] = useState('login');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [questions, setQuestions] = useState(() => {
-    // Load questions from localStorage on initial load
     const cachedQuestions = localStorage.getItem('questions');
     return cachedQuestions ? JSON.parse(cachedQuestions) : [];
   });
@@ -44,7 +43,6 @@ const App = () => {
 
   const subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'History', 'Literature', 'Computer Science', 'Psychology'];
 
-  // Hydrate user from JWT on app load
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -63,7 +61,6 @@ const App = () => {
       });
   }, []);
 
-  // Load top contributors once
   useEffect(() => {
     const controller = new AbortController();
     fetch('/api/contributors', { signal: controller.signal })
@@ -79,7 +76,6 @@ const App = () => {
     return () => controller.abort();
   }, []);
 
-  // Fetch questions based on selected subject
   useEffect(() => {
     const controller = new AbortController();
     const run = async () => {
@@ -108,10 +104,8 @@ const App = () => {
           content: q.content,
         }));
         setQuestions(normalized);
-        // Persist questions to localStorage for page reload
         localStorage.setItem('questions', JSON.stringify(normalized));
       } catch (e) {
-        // If backend fails, try to load from localStorage
         const cachedQuestions = localStorage.getItem('questions');
         if (cachedQuestions) {
           setQuestions(JSON.parse(cachedQuestions));
@@ -122,7 +116,6 @@ const App = () => {
     return () => controller.abort();
   }, [selectedSubject]);
 
-  // Fetch student notifications when user logs in
   useEffect(() => {
     if (!user) { setStudentNotifications([]); return; }
     const controller = new AbortController();
@@ -183,7 +176,6 @@ const App = () => {
       if (data.token) localStorage.setItem('token', data.token);
       const avatar = (data.user.name || data.user.email || 'UU').substring(0, 2).toUpperCase();
       setUser({ ...data.user, avatar });
-      // redirect based on role
       if (data.user.role === 'admin') {
         setCurrentPage('admindashboard');
       } else if (data.user.role === 'teacher') {
@@ -207,7 +199,6 @@ const App = () => {
       role: formData.get('role'),
       school: formData.get('school'),
     };
-    // Prevent admin signup per your requirement
     if (payload.role === 'admin') {
       alert('Admin accounts cannot be created via signup.');
       return;
@@ -225,19 +216,16 @@ const App = () => {
       
       const data = await res.json();
       
-      // Handle teacher pending approval
       if (data.user && data.user.role === 'teacher' && data.user.status === 'pending') {
         alert(data.message || 'Your application is pending admin approval. You will be notified once approved.');
         setShowAuthModal(false);
         return;
       }
       
-      // Handle successful signup with token
       if (data.token) localStorage.setItem('token', data.token);
       const avatar = (data.user.name || data.user.email || 'UU').substring(0, 2).toUpperCase();
       setUser({ ...data.user, avatar });
 
-      // Set current page based on role
       if (data.user.role === 'teacher') {
         setCurrentPage('teacher');
       } else if (data.user.role === 'admin') {
@@ -257,7 +245,6 @@ const App = () => {
     setCurrentPage('home');
   };
 
-  // inside App component
   const approveAnswer = (questionId, answerId) => {
     fetch(`/api/answers/${answerId}/status`, {
       method: 'PATCH',
@@ -376,6 +363,8 @@ const App = () => {
           answersByQuestion={answersByQuestion}
           setSelectedQuestion={setSelectedQuestion}
           setShowQuestionDetailModal={setShowQuestionDetailModal}
+          user={user}
+          setQuestions={setQuestions}
         />
       )}
 

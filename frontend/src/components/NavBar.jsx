@@ -36,10 +36,19 @@ export default function NavBar({
       
       if (!res.ok) throw new Error(`Failed to ${action} teacher`);
       
-      // Remove teacher from notifications
       setAdminNotifications(prev => prev.filter(t => t.id !== teacherId));
     } catch (error) {
       alert(`Failed to ${action} teacher: ` + error.message);
+    }
+  };
+
+  const handleLogoClick = () => {
+    if (user?.role === 'teacher') {
+      setCurrentPage('teacher');
+    } else if (user?.role === 'admin') {
+      setCurrentPage('admindashboard');
+    } else {
+      setCurrentPage('home');
     }
   };
 
@@ -48,8 +57,8 @@ export default function NavBar({
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-8">
-            <button onClick={() => setCurrentPage('home')} className="flex items-center space-x-2 font-bold text-xl">
-              <BookOpen className="w-6 h-6" />
+            <button onClick={handleLogoClick} className="flex items-center space-x-2 font-bold text-xl">
+              
               <span>Peer to Peer Platform</span>
             </button>
             <div className="hidden md:flex space-x-6">

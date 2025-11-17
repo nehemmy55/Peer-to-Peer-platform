@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 
+// Schema for user notifications
 const notificationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   type: { type: String, enum: ['answer_status', 'system'], default: 'system' },

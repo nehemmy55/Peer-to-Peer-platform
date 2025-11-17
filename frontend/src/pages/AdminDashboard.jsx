@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Bell, AlertTriangle, FileText, LogOut, Menu, Users, X, Eye, EyeOff } from 'lucide-react';
+import { Bell, LogOut, Menu, X } from 'lucide-react';
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
@@ -10,13 +10,11 @@ export default function AdminDashboard() {
   const [showTeacherApprovals, setShowTeacherApprovals] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [visiblePasswords, setVisiblePasswords] = useState({});
 
   useEffect(() => {
     const run = async () => {
       setLoading(true);
       try {
-        // Fetch current user info
         const meRes = await fetch('/api/auth/me', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` }
         });
@@ -25,22 +23,18 @@ export default function AdminDashboard() {
           setCurrentUser(meData.user);
         }
 
-        // Fetch users
         const usersRes = await fetch('/api/admin/users', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` }
         });
         const usersData = await usersRes.json();
-        console.log('Users data:', usersData.users); // Debug log
         setUsers(usersData.users || []);
 
-        // Fetch pending teachers
         const teachersRes = await fetch('/api/admin/teachers/pending', {
           headers: { Authorization: `Bearer ${localStorage.getItem('token') || ''}` }
         });
         const teachersData = await teachersRes.json();
         setPendingTeachers(teachersData.teachers || []);
       } catch {
-        // keep empty if fetch fails
       } finally {
         setLoading(false);
       }
@@ -77,7 +71,6 @@ export default function AdminDashboard() {
       
       if (!res.ok) throw new Error('Failed to delete user');
       
-      // Remove user from state
       setUsers(prev => prev.filter(u => u.id !== userId));
     } catch (error) {
       alert('Failed to delete user: ' + error.message);
@@ -96,28 +89,16 @@ export default function AdminDashboard() {
       
       if (!res.ok) throw new Error(`Failed to ${action} teacher`);
       
-      // Remove teacher from pending list
       setPendingTeachers(prev => prev.filter(t => t.id !== teacherId));
     } catch (error) {
       alert(`Failed to ${action} teacher: ` + error.message);
     }
   };
 
-  const togglePasswordVisibility = (userId) => {
-    setVisiblePasswords(prev => {
-      const newState = {
-        ...prev,
-        [userId]: !prev[userId]
-      };
-      console.log('Toggling password visibility for user:', userId, 'New state:', newState); // Debug log
-      return newState;
-    });
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex">
-        {/* Sidebar */}
         <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r min-h-screen transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
@@ -147,7 +128,6 @@ export default function AdminDashboard() {
           </div>
         </aside>
 
-        {/* Sidebar overlay for mobile */}
         {sidebarOpen && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
@@ -155,7 +135,6 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* Main */}
         <main className="flex-1 p-4 lg:p-6 w-full lg:w-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -197,14 +176,12 @@ export default function AdminDashboard() {
 
           <div className="bg-white rounded-lg shadow overflow-x-auto">
             <div className="min-w-full">
-              {/* Desktop Table Header */}
               <div className="hidden lg:grid grid-cols-12 px-4 py-3 border-b text-sm text-gray-600">
                 <div className="col-span-2">Name</div>
                 <div className="col-span-3">Email Address</div>
-                <div className="col-span-2">Password</div>
-                <div className="col-span-2">Last Payment</div>
-                <div className="col-span-1">Status</div>
-                <div className="col-span-2">Actions</div>
+                <div className="col-span-2">Role</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-3">Actions</div>
               </div>
               {loading ? (
                 <div className="p-6 text-center text-gray-600">Loading users…</div>
@@ -212,46 +189,22 @@ export default function AdminDashboard() {
                 <div className="p-6 text-center text-gray-600">No users found.</div>
               ) : (
                 <>
-                  {/* Desktop View */}
                   <div className="hidden lg:block">
                     {filtered.map((u) => (
                       <div key={u.id} className="grid grid-cols-12 px-4 py-4 border-b items-center">
                         <div className="col-span-2 font-medium">{u.name}</div>
                         <div className="col-span-3 text-gray-700 break-words">{u.email}</div>
-                        <div className="col-span-2 flex items-center gap-2">
-                          <div className="text-gray-600 font-mono text-xs break-all flex-1" title={u.password && u.password !== 'N/A' && visiblePasswords[u.id] ? u.password : ''}>
-                            {u.password && u.password !== 'N/A' ? (
-                              visiblePasswords[u.id] ? (
-                                <span className="text-gray-800">{u.password}</span>
-                              ) : (
-                                <span className="text-gray-400">{'•'.repeat(Math.min(u.password.length, 20))}</span>
-                              )
-                            ) : (
-                              <span className="text-gray-400">N/A</span>
-                            )}
-                          </div>
-                          {u.password && u.password !== 'N/A' ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                togglePasswordVisibility(u.id);
-                              }}
-                              className="p-1 hover:bg-gray-100 rounded transition flex-shrink-0"
-                              title={visiblePasswords[u.id] ? 'Hide password' : 'Show password'}
-                            >
-                              {visiblePasswords[u.id] ? (
-                                <EyeOff className="w-4 h-4 text-gray-600" />
-                              ) : (
-                                <Eye className="w-4 h-4 text-gray-600" />
-                              )}
-                            </button>
-                          ) : null}
+                        <div className="col-span-2">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            u.role === 'admin' ? 'bg-red-100 text-red-800' :
+                            u.role === 'teacher' ? 'bg-green-100 text-green-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`}>
+                            {u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'Student'}
+                          </span>
                         </div>
-                        <div className="col-span-2 text-gray-600">{new Date(u.lastPayment).toISOString().slice(0, 10)}</div>
-                        <div className="col-span-1">{chip(u.displayStatus)}</div>
-                        <div className="col-span-2 flex gap-2">
+                        <div className="col-span-2">{chip(u.displayStatus)}</div>
+                        <div className="col-span-3 flex gap-2">
                           <button className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm">View</button>
                           <button 
                             onClick={() => handleDeleteUser(u.id)} 
@@ -263,7 +216,6 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                   </div>
-                  {/* Mobile View */}
                   <div className="lg:hidden">
                     {filtered.map((u) => (
                       <div key={u.id} className="px-4 py-4 border-b space-y-2">
@@ -274,44 +226,18 @@ export default function AdminDashboard() {
                           </div>
                           <div>{chip(u.displayStatus)}</div>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="text-sm">
                           <div>
-                            <span className="text-gray-500">Password:</span>
-                            <div className="flex items-center gap-2">
-                              <div className="font-mono text-gray-700 text-xs break-all flex-1" title={u.password && u.password !== 'N/A' && visiblePasswords[u.id] ? u.password : ''}>
-                                {u.password && u.password !== 'N/A' ? (
-                                  visiblePasswords[u.id] ? (
-                                    <span className="text-gray-800">{u.password}</span>
-                                  ) : (
-                                    <span className="text-gray-400">{'•'.repeat(Math.min(u.password.length, 20))}</span>
-                                  )
-                                ) : (
-                                  <span className="text-gray-400">N/A</span>
-                                )}
-                              </div>
-                              {u.password && u.password !== 'N/A' ? (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    togglePasswordVisibility(u.id);
-                                  }}
-                                  className="p-1 hover:bg-gray-100 rounded transition flex-shrink-0"
-                                  title={visiblePasswords[u.id] ? 'Hide password' : 'Show password'}
-                                >
-                                  {visiblePasswords[u.id] ? (
-                                    <EyeOff className="w-4 h-4 text-gray-600" />
-                                  ) : (
-                                    <Eye className="w-4 h-4 text-gray-600" />
-                                  )}
-                                </button>
-                              ) : null}
+                            <span className="text-gray-500">Role:</span>
+                            <div className="mt-1">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                u.role === 'admin' ? 'bg-red-100 text-red-800' :
+                                u.role === 'teacher' ? 'bg-green-100 text-green-800' :
+                                'bg-blue-100 text-blue-800'
+                              }`}>
+                                {u.role ? u.role.charAt(0).toUpperCase() + u.role.slice(1) : 'Student'}
+                              </span>
                             </div>
-                          </div>
-                          <div>
-                            <span className="text-gray-500">Last Payment:</span>
-                            <div className="text-gray-700">{new Date(u.lastPayment).toISOString().slice(0, 10)}</div>
                           </div>
                         </div>
                         <div className="flex gap-2 pt-2">
@@ -333,7 +259,6 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {/* Teacher Approval Modal */}
       {showTeacherApprovals && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">

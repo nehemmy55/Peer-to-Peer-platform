@@ -25,7 +25,6 @@ router.patch('/:id/read', requireAuth, requireRole('teacher'), async (req, res) 
   }
 });
 
-// Student/my notifications
 router.get('/my', requireAuth, async (req, res) => {
   try {
     const notifications = await Notification.find({ userId: req.user.id, read: false }).sort({ createdAt: -1 });

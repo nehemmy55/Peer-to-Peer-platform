@@ -21,7 +21,6 @@ export default function QuestionModeration({ questions, setQuestions }) {
     .then(() => {
       setQuestions(prev => {
         const updated = prev.map(q => q.id === id ? { ...q, verified } : q);
-        // Update localStorage when questions are modified
         localStorage.setItem('questions', JSON.stringify(updated));
         return updated;
       });

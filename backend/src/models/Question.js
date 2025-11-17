@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+// Schema for ask questions
 const questionSchema = new mongoose.Schema(
   {
     title: String,
