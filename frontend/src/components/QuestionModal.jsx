@@ -44,7 +44,12 @@ export default function QuestionModal({ subjects, setShowQuestionModal, setShowA
         timestamp: 'just now',
         content: created.content ?? details.trim(),
       };
-      setQuestions((prev) => [uiQuestion, ...prev]);
+      setQuestions((prev) => {
+        const updated = [uiQuestion, ...prev];
+        // Update localStorage when new question is added
+        localStorage.setItem('questions', JSON.stringify(updated));
+        return updated;
+      });
       setAnswersByQuestion((prev) => ({ ...prev, [uiQuestion.id]: [] }));
       setShowQuestionModal(false);
     } catch (err) {

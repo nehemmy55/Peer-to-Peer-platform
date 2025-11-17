@@ -13,6 +13,7 @@ export default function NavBar({
   adminNotifications,
   studentNotifications,
   markStudentNotifRead,
+  setAdminNotifications,
 }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -22,6 +23,25 @@ export default function NavBar({
   const teacherPendingCount = pendingEntries.length;
   const adminNotifCount = (adminNotifications || []).length;
   const studentNotifCount = (studentNotifications || []).length;
+
+  const handleAdminTeacherAction = async (teacherId, action) => {
+    try {
+      const res = await fetch(`/api/admin/teachers/${teacherId}/${action}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token') || ''}` 
+        }
+      });
+      
+      if (!res.ok) throw new Error(`Failed to ${action} teacher`);
+      
+      // Remove teacher from notifications
+      setAdminNotifications(prev => prev.filter(t => t.id !== teacherId));
+    } catch (error) {
+      alert(`Failed to ${action} teacher: ` + error.message);
+    }
+  };
 
   return (
     <nav className="bg-gray-900 text-white shadow-lg sticky top-0 z-50">
@@ -33,16 +53,19 @@ export default function NavBar({
               <span>Peer to Peer Platform</span>
             </button>
             <div className="hidden md:flex space-x-6">
-              <button onClick={() => (user ? setCurrentPage('questions') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Questions</button>
-              <button onClick={() => (user ? setCurrentPage('resources') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Resources</button>
-              {!(user && user.role === 'teacher') && (
+              {user && user.role === 'admin' ? (
+                <button onClick={() => setCurrentPage('admindashboard')} className="hover:text-blue-400 transition">User Manage</button>
+              ) : (
                 <>
-                  <button onClick={() => (user ? setCurrentPage('contributors') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Contributors</button>
-              <button onClick={() => (user ? setCurrentPage('subjects') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Subjects</button>
+                  <button onClick={() => (user ? setCurrentPage('questions') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Questions</button>
+                  <button onClick={() => (user ? setCurrentPage('resources') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Resources</button>
+                  {!(user && user.role === 'teacher') && (
+                    <>
+                      <button onClick={() => (user ? setCurrentPage('contributors') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Contributors</button>
+                      <button onClick={() => (user ? setCurrentPage('subjects') : setShowAuthModal(true))} className="hover:text-blue-400 transition">Subjects</button>
+                    </>
+                  )}
                 </>
-              )}
-              {user && user.role === 'admin' && (
-                <button onClick={() => setCurrentPage('admindashboard')} className="hover:text-blue-400 transition">Admin Dashboard</button>
               )}
             </div>
             <button
@@ -116,22 +139,36 @@ export default function NavBar({
                         </>
                       ) : (
                         <>
-                          <div className="px-3 py-2 border-b font-medium">Admin Notifications</div>
+                          <div className="px-3 py-2 border-b font-medium">Pending Teacher Approvals</div>
                           {adminNotifCount === 0 ? (
-                            <div className="px-3 py-3 text-sm text-gray-600">No notifications.</div>
+                            <div className="px-3 py-3 text-sm text-gray-600">No pending teacher approvals.</div>
                           ) : (
                             <div className="max-h-64 overflow-auto">
                               {adminNotifications.slice(0, 8).map((n, idx) => (
                                 <div key={idx} className="px-3 py-2 border-b">
-                                  <div className="text-sm font-medium">{n.type === 'teacher_signup' ? 'New Teacher Signup' : 'Notification'}</div>
+                                  <div className="text-sm font-medium">{n.name || 'New Teacher'}</div>
                                   <div className="text-sm text-gray-700">{n.email}</div>
-                                  <div className="text-xs text-gray-500">{new Date(n.time).toLocaleString()}</div>
+                                  <div className="text-sm text-gray-600">{n.school}</div>
+                                  <div className="mt-2 flex items-center gap-2">
+                                    <button
+                                      className="px-2 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded"
+                                      onClick={(e) => { e.stopPropagation(); handleAdminTeacherAction(n.id, 'approve'); setShowNotifications(false); }}
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      className="px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+                                      onClick={(e) => { e.stopPropagation(); handleAdminTeacherAction(n.id, 'reject'); setShowNotifications(false); }}
+                                    >
+                                      Reject
+                                    </button>
+                                  </div>
                                 </div>
                               ))}
                             </div>
                           )}
                           <div className="px-3 py-2 flex items-center justify-between">
-                            <button className="text-blue-600 text-sm hover:text-blue-700" onClick={() => { setCurrentPage('admindashboard'); setShowNotifications(false); }}>Open Admin Dashboard</button>
+                            <span className="text-xs text-gray-600">Total pending: {adminNotifCount}</span>
                           </div>
                         </>
                       )}
@@ -168,12 +205,15 @@ export default function NavBar({
         {mobileNavOpen && (
           <div className="md:hidden border-t border-gray-800 py-3 space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <button onClick={() => (user ? (setCurrentPage('questions'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Questions</button>
-              <button onClick={() => (user ? (setCurrentPage('resources'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Resources</button>
-              <button onClick={() => (user ? (setCurrentPage('contributors'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Contributors</button>
-              <button onClick={() => (user ? (setCurrentPage('subjects'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Subjects</button>
-              {user && user.role === 'admin' && (
-                <button onClick={() => { setCurrentPage('admindashboard'); setMobileNavOpen(false); }} className="px-3 py-2 text-left rounded hover:bg-gray-800">Admin Dashboard</button>
+              {user && user.role === 'admin' ? (
+                <button onClick={() => { setCurrentPage('admindashboard'); setMobileNavOpen(false); }} className="px-3 py-2 text-left rounded hover:bg-gray-800">User Manage</button>
+              ) : (
+                <>
+                  <button onClick={() => (user ? (setCurrentPage('questions'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Questions</button>
+                  <button onClick={() => (user ? (setCurrentPage('resources'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Resources</button>
+                  <button onClick={() => (user ? (setCurrentPage('contributors'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Contributors</button>
+                  <button onClick={() => (user ? (setCurrentPage('subjects'), setMobileNavOpen(false)) : setShowAuthModal(true))} className="px-3 py-2 text-left rounded hover:bg-gray-800">Subjects</button>
+                </>
               )}
             </div>
           </div>

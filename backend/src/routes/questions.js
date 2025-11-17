@@ -5,20 +5,15 @@ import Question from '../models/Question.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import Answer from '../models/Answer.js';
 
-
-
 const router = express.Router();
 
-// GET all questions (with optional subject filter)
-router.get('/', requireAuth, async (req, res) => {
+// GET all questions (with optional subject filter) - public access
+router.get('/', async (req, res) => {
   const { subject, all } = req.query;
   const filter = subject && subject !== 'all' ? { subject } : {};
 
-  // For admins default to verified-only; non-admins see all
-  if (req.user.role === 'admin' && all !== 'true') {
-    filter.verified = true;
-  }
-
+  // Show all questions regardless of verification status for better visibility
+  // Both verified and unverified questions should appear in recent questions
   const items = await Question.find(filter).sort({ createdAt: -1 }).limit(100);
   const withCounts = await Promise.all(
     items.map(async (q) => {
@@ -76,8 +71,8 @@ router.post('/', requireAuth, async (req, res) => {
   }
 });
 
-// PATCH question status (admin only)
-router.patch('/:id/status', requireAuth, requireRole('admin'), async (req, res) => {
+// PATCH question status (teacher or admin)
+router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res) => {
   const { verified } = req.body;
   if (typeof verified !== 'boolean') {
     return res.status(400).json({ error: 'Invalid verified status' });

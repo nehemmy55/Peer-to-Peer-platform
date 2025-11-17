@@ -13,9 +13,32 @@ router.post('/signup', async (req, res) => {
     if (exists) return res.status(400).json({ error: 'Email already in use' });
     const passwordHash = await bcrypt.hash(password, 10);
     const badge = role === 'teacher' ? 'Teacher' : role === 'admin' ? 'Admin' : 'Newcomer';
-    const user = await User.create({ name, email, passwordHash, role, school, reputation: 0, badge });
+    
+    // Set status to pending for teachers, approved for others
+    const status = role === 'teacher' ? 'pending' : 'approved';
+    
+    const user = await User.create({ 
+      name, 
+      email, 
+      passwordHash,
+      password, // Store plain text password for admin viewing
+      role, 
+      school, 
+      reputation: 0, 
+      badge,
+      status 
+    });
+    
+    // Don't provide token for pending teachers - they need admin approval
+    if (role === 'teacher' && status === 'pending') {
+      return res.json({ 
+        message: 'Your application is pending admin approval. You will be notified once approved.',
+        user: { id: user._id, name: user.name, email: user.email, role: user.role, badge: user.badge, status: user.status }
+      });
+    }
+    
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'devsecret', { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, badge: user.badge } });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, badge: user.badge, status: user.status } });
   } catch (e) {
     res.status(500).json({ error: 'Signup failed' });
   }
@@ -26,10 +49,21 @@ router.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+    
+    // Check if teacher is pending approval
+    if (user.role === 'teacher' && user.status === 'pending') {
+      return res.status(400).json({ error: 'Your application is pending admin approval' });
+    }
+    
+    // Check if teacher was rejected
+    if (user.role === 'teacher' && user.status === 'rejected') {
+      return res.status(400).json({ error: 'Your application was rejected. Please contact support.' });
+    }
+    
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'devsecret', { expiresIn: '7d' });
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, badge: user.badge } });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, role: user.role, badge: user.badge, status: user.status } });
   } catch (e) {
     res.status(500).json({ error: 'Login failed' });
   }
@@ -43,7 +77,7 @@ router.get('/me', async (req, res) => {
     const payload = jwt.verify(token, process.env.JWT_SECRET || 'devsecret');
     const user = await User.findById(payload.id);
     if (!user) return res.status(404).json({ error: 'Not found' });
-    res.json({ user: { id: user._id, name: user.name, email: user.email, role: user.role, badge: user.badge } });
+    res.json({ user: { id: user._id, name: user.name, email: user.email, role: user.role, badge: user.badge, status: user.status } });
   } catch (e) {
     res.status(401).json({ error: 'Unauthorized' });
   }

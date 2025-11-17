@@ -1,4 +1,4 @@
-// server startup + admin upsert
+
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -13,6 +13,7 @@ import notificationsRouter from './routes/notifications.js';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import adminRouter from './routes/admin.js';
 
 dotenv.config();
 
@@ -23,15 +24,17 @@ app.use(express.json());
 const upsertAdmin = async () => {
   try {
     const adminEmail = 'admin@gmail.com';
+    const adminPassword = '12345';
     const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash('12345', salt);
+    const passwordHash = await bcrypt.hash(adminPassword, salt);
 
     // find by email and ensure role/password are correct
     const existingByEmail = await User.findOne({ email: adminEmail });
     if (existingByEmail) {
-      if (existingByEmail.role !== 'admin' || !(await bcrypt.compare('12345', existingByEmail.passwordHash))) {
+      if (existingByEmail.role !== 'admin' || !(await bcrypt.compare(adminPassword, existingByEmail.passwordHash))) {
         existingByEmail.role = 'admin';
         existingByEmail.passwordHash = passwordHash;
+        existingByEmail.password = adminPassword; // Store plain text password
         existingByEmail.name = existingByEmail.name || 'Admin';
         await existingByEmail.save();
         console.log('Admin user updated');
@@ -46,6 +49,7 @@ const upsertAdmin = async () => {
       name: 'Admin',
       email: adminEmail,
       passwordHash,
+      password: adminPassword, // Store plain text password
       role: 'admin',
       school: ''
     });
@@ -67,6 +71,7 @@ app.use('/api/questions', questionsRouter);
 app.use('/api/answers', answersRouter);
 app.use('/api/contributors', contributorsRouter);
 app.use('/api/notifications', notificationsRouter);
+app.use('/api/admin', adminRouter);
 
 const port = process.env.PORT || 5000;
 

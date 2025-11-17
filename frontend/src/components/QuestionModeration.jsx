@@ -19,7 +19,12 @@ export default function QuestionModeration({ questions, setQuestions }) {
       return r.json();
     })
     .then(() => {
-      setQuestions(prev => prev.map(q => q.id === id ? { ...q, verified } : q));
+      setQuestions(prev => {
+        const updated = prev.map(q => q.id === id ? { ...q, verified } : q);
+        // Update localStorage when questions are modified
+        localStorage.setItem('questions', JSON.stringify(updated));
+        return updated;
+      });
     })
     .catch(err => {
       console.error('Failed to update question status:', err);

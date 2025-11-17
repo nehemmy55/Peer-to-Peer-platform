@@ -121,10 +121,17 @@ export default function TeacherDashboard({
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <h2 className="text-2xl font-bold">Teacher Dashboard</h2>
-        <div className="text-sm text-gray-600 flex flex-wrap items-center gap-3">
-          <span>Pending: {pendingCount}</span>
-          <span className="text-green-700">Approved: {approvedCount}</span>
-          <span className="text-red-700">Rejected: {rejectedCount}</span>
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-600 flex flex-wrap items-center gap-3">
+            <span>Pending: {pendingCount}</span>
+            <span className="text-green-700">Approved: {approvedCount}</span>
+            <span className="text-red-700">Rejected: {rejectedCount}</span>
+          </div>
+          <div className="flex gap-2">
+            {['answers', 'questions'].map(s => (
+              <button key={s} onClick={() => setView(s)} className={`px-3 py-2 rounded border ${view === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 hover:bg-gray-50'}`}>{s.charAt(0).toUpperCase() + s.slice(1)}</button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -141,32 +148,6 @@ export default function TeacherDashboard({
             ))}
           </div>
         )}
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div className="flex gap-2">
-            {['answers', 'questions'].map(s => (
-              <button key={s} onClick={() => setView(s)} className={`px-3 py-2 rounded border ${view === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 hover:bg-gray-50'}`}>{s.charAt(0).toUpperCase() + s.slice(1)}</button>
-            ))}
-          </div>
-          <div>
-            <select value={subjectFilter} onChange={(e) => setSubjectFilter(e.target.value)} className="w-full px-3 py-2 border rounded">
-              <option value="all">All Subjects</option>
-              {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <input value={textFilter} onChange={(e) => setTextFilter(e.target.value)} placeholder="Search by content or author" className="w-full px-3 py-2 border rounded" />
-          </div>
-        </div>
-        <div className="flex items-center gap-3 mt-3">
-          <button onClick={bulkApprove} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Approve All Pending (Filtered)</button>
-          <button onClick={bulkReject} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Reject All Pending (Filtered)</button>
-          <button onClick={loadAnswers} className="bg-gray-100 text-gray-800 px-4 py-2 rounded border hover:bg-gray-200">Refresh</button>
-        </div>
-        {answersLoading && (<div className="mt-3 text-sm text-gray-600">Loading answers…</div>)}
-        {modNotice && (<div className="mt-3 text-sm text-blue-700">{modNotice}</div>)}
       </div>
 
       {view === 'answers' && (

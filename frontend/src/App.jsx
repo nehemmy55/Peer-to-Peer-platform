@@ -12,6 +12,7 @@ import ContributorsPage from './pages/ContributorsPage';
 import SubjectsPage from './pages/SubjectsPage';
 import ManagementPage from './pages/ManagementPage';
 import TeacherDashboard from './pages/TeacherDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -20,7 +21,11 @@ const App = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState(() => {
+    // Load questions from localStorage on initial load
+    const cachedQuestions = localStorage.getItem('questions');
+    return cachedQuestions ? JSON.parse(cachedQuestions) : [];
+  });
   const [resources, setResources] = useState([]);
   const [topContributors, setTopContributors] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,13 +63,37 @@ const App = () => {
       });
   }, []);
 
+  // Load top contributors once
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/contributors', { signal: controller.signal })
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data) => {
+        if (Array.isArray(data?.contributors)) {
+          setTopContributors(data.contributors);
+        }
+      })
+      .catch(() => {
+        setTopContributors([]);
+      });
+    return () => controller.abort();
+  }, []);
+
   // Fetch questions based on selected subject
   useEffect(() => {
     const controller = new AbortController();
     const run = async () => {
       try {
         const qs = selectedSubject && selectedSubject !== 'all' ? `?subject=${encodeURIComponent(selectedSubject)}` : '';
-        const res = await fetch(`/api/questions${qs}`, { signal: controller.signal });
+        const token = localStorage.getItem('token');
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        const res = await fetch(`/api/questions${qs}`, { 
+          signal: controller.signal,
+          headers
+        });
         if (!res.ok) throw new Error('Failed to load questions');
         const data = await res.json();
         const normalized = (data.questions || []).map((q, idx) => ({
@@ -79,8 +108,14 @@ const App = () => {
           content: q.content,
         }));
         setQuestions(normalized);
+        // Persist questions to localStorage for page reload
+        localStorage.setItem('questions', JSON.stringify(normalized));
       } catch (e) {
-        // keep demo if backend not ready
+        // If backend fails, try to load from localStorage
+        const cachedQuestions = localStorage.getItem('questions');
+        if (cachedQuestions) {
+          setQuestions(JSON.parse(cachedQuestions));
+        }
       }
     };
     run();
@@ -138,14 +173,19 @@ const App = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Login failed');
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Login failed' }));
+        throw new Error(errorData.error || 'Login failed');
+      }
+      
       const data = await res.json();
       if (data.token) localStorage.setItem('token', data.token);
       const avatar = (data.user.name || data.user.email || 'UU').substring(0, 2).toUpperCase();
       setUser({ ...data.user, avatar });
       // redirect based on role
       if (data.user.role === 'admin') {
-        setCurrentPage('management');
+        setCurrentPage('admindashboard');
       } else if (data.user.role === 'teacher') {
         setCurrentPage('teacher');
       } else {
@@ -153,7 +193,7 @@ const App = () => {
       }
       setShowAuthModal(false);
     } catch (err) {
-      alert('Invalid credentials');
+      alert('Login failed: ' + err.message);
     }
   };
 
@@ -178,26 +218,36 @@ const App = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error('Signup failed');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: 'Signup failed' }));
+        throw new Error(errorData.error || 'Signup failed');
+      }
+      
       const data = await res.json();
+      
+      // Handle teacher pending approval
+      if (data.user && data.user.role === 'teacher' && data.user.status === 'pending') {
+        alert(data.message || 'Your application is pending admin approval. You will be notified once approved.');
+        setShowAuthModal(false);
+        return;
+      }
+      
+      // Handle successful signup with token
       if (data.token) localStorage.setItem('token', data.token);
       const avatar = (data.user.name || data.user.email || 'UU').substring(0, 2).toUpperCase();
       setUser({ ...data.user, avatar });
 
-      // Notify admin if a teacher signed up
+      // Set current page based on role
       if (data.user.role === 'teacher') {
-        setAdminNotifications((prev) => [
-          ...prev,
-          { type: 'teacher_signup', email: data.user.email, time: new Date().toISOString() },
-        ]);
         setCurrentPage('teacher');
+      } else if (data.user.role === 'admin') {
+        setCurrentPage('admindashboard');
       } else {
-        // student
         setCurrentPage('home');
       }
       setShowAuthModal(false);
     } catch (err) {
-      alert('Signup failed');
+      alert('Signup failed: ' + err.message);
     }
   };
 
@@ -343,7 +393,6 @@ const App = () => {
       {currentPage === 'contributors' && (
         <ContributorsPage
           topContributors={topContributors}
-          questions={questions}
         />
       )}
 
@@ -357,6 +406,10 @@ const App = () => {
 
       {currentPage === 'management' && (
         <ManagementPage />
+      )}
+
+      {currentPage === 'admindashboard' && (
+        <AdminDashboard />
       )}
 
       {currentPage === 'about' && (
