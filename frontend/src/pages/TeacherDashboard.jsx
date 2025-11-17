@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import QuestionModeration from '../components/QuestionModeration';
 
+// Teacher dashboard for managing answers and questions
 export default function TeacherDashboard({
   currentPage,
   setAnswersLoading,
@@ -21,6 +22,7 @@ export default function TeacherDashboard({
   const [allQuestions, setAllQuestions] = useState([]);
   const [notifications, setNotifications] = useState([]);
 
+  // Load all questions for moderation view
   useEffect(() => {
     if (view !== 'questions') return;
     fetch('/api/questions?all=true', {
@@ -37,6 +39,7 @@ export default function TeacherDashboard({
     });
   }, [view]);
 
+  // Load answers with filters
   const loadAnswers = useCallback(() => {
     if (currentPage !== 'teacher') return;
     setAnswersLoading(true);
@@ -75,6 +78,7 @@ export default function TeacherDashboard({
 
   useEffect(() => { loadAnswers(); }, [loadAnswers]);
 
+  // Load teacher notifications
   useEffect(() => {
     fetch('/api/notifications', {
       headers: {
@@ -92,6 +96,7 @@ export default function TeacherDashboard({
 
   const entries = Object.entries(answersByQuestion || {}).flatMap(([qid, list]) => list.map(a => ({ questionId: qid, answer: a })));
 
+  // Filter answers based on current filters
   const filtered = entries
     .filter(({ answer }) => statusFilter === 'all' || answer.status === statusFilter)
     .filter(({ questionId, answer }) => {
@@ -105,12 +110,14 @@ export default function TeacherDashboard({
   const approvedCount = entries.filter(({ answer }) => answer.status === 'approved').length;
   const rejectedCount = entries.filter(({ answer }) => answer.status === 'rejected').length;
 
+  // approve filtered pending answers
   const bulkApprove = () => {
     filtered.filter(({ answer }) => answer.status === 'pending').forEach(({ questionId, answer }) => approveAnswer(questionId, answer.id));
     setModNotice('Approved pending answers locally. Click Refresh to sync.');
     setTimeout(() => setModNotice(''), 2500);
   };
 
+  //  reject filtered pending answers
   const bulkReject = () => {
     filtered.filter(({ answer }) => answer.status === 'pending').forEach(({ questionId, answer }) => rejectAnswer(questionId, answer.id));
     setModNotice('Rejected pending answers locally. Click Refresh to sync.');
@@ -135,6 +142,7 @@ export default function TeacherDashboard({
         </div>
       </div>
 
+      {/* Notifications section */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
         <h3 className="text-lg font-bold mb-4">Notifications</h3>
         {notifications.length === 0 ? (
@@ -150,6 +158,7 @@ export default function TeacherDashboard({
         )}
       </div>
 
+      {/* Answers moderation view */}
       {view === 'answers' && (
         <>
           <div className="bg-white rounded-lg shadow p-4 mb-6">
@@ -210,6 +219,7 @@ export default function TeacherDashboard({
         </>
       )}
 
+      {/* Questions moderation view */}
       {view === 'questions' && (
         <QuestionModeration questions={allQuestions} setQuestions={setAllQuestions} />
       )}

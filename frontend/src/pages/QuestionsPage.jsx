@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
+// Questions listing page with filtering and voting
 export default function QuestionsPage({ questions, selectedSubject, setSelectedSubject, searchQuery, questionsLoading, answersByQuestion, setSelectedQuestion, setShowQuestionDetailModal, user, setQuestions }) {
   const [votingQuestions, setVotingQuestions] = useState(new Set());
   const filteredQuestions = questions
@@ -12,6 +13,7 @@ export default function QuestionsPage({ questions, selectedSubject, setSelectedS
         (q.content && q.content.toLowerCase().includes(query));
     });
 
+  // Handle question voting
   const handleVote = async (questionId, action) => {
     if (!user) {
       alert('Please log in to vote');
@@ -68,6 +70,7 @@ export default function QuestionsPage({ questions, selectedSubject, setSelectedS
         </div>
       </div>
 
+      {/* Search input */}
       <div className="mb-6">
         <input
           type="text"
@@ -100,6 +103,7 @@ export default function QuestionsPage({ questions, selectedSubject, setSelectedS
                     <span>{q.timestamp}</span>
                   </div>
                 </div>
+                {/* Voting controls */}
                 <div className="text-center">
                   <div className="flex items-center space-x-2">
                     <button 

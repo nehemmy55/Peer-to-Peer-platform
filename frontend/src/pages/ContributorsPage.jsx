@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Contributors leaderboard page
 export default function ContributorsPage({ topContributors = [] }) {
   const highlight = topContributors.slice(0, 3);
 
@@ -12,6 +13,7 @@ export default function ContributorsPage({ topContributors = [] }) {
         </p>
       </div>
 
+      {/* Top 3 contributors highlight */}
       {highlight.length > 0 && (
         <div className="mb-10 grid grid-cols-1 md:grid-cols-3 gap-4">
           {highlight.map((c) => (
@@ -29,6 +31,7 @@ export default function ContributorsPage({ topContributors = [] }) {
         </div>
       )}
 
+      {/* Contributors table */}
       {topContributors.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
           No contributors yet. Encourage students to start asking or answering questions!

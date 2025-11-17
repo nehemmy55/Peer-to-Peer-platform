@@ -1,6 +1,7 @@
 import React from 'react';
 import { Upload } from 'lucide-react';
 
+// Resources page for books and study materials
 export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bookLoading, bookError, bookResults, resources, setShowAuthModal, user }) {
   const safeBookResults = Array.isArray(bookResults) ? bookResults : [];
   const safeResources = Array.isArray(resources) ? resources : [];
@@ -15,6 +16,7 @@ export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bo
         </button>
       </div>
 
+      {/* Book search section */}
       <div className="bg-white rounded-lg shadow p-4 mb-8">
         <h3 className="text-xl font-bold mb-3">Search Books</h3>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -23,6 +25,7 @@ export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bo
         </div>
         {bookLoading && <p className="mt-3 text-gray-600">Searching books...</p>}
         {bookError && <p className="mt-3 text-red-600">{bookError}</p>}
+        {/* Book results grid */}
         {safeBookResults.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-4">
             {safeBookResults.map((b) => {
@@ -49,6 +52,7 @@ export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bo
         )}
       </div>
 
+      {/* Shared resources grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
         {safeResources.map((r) => (
           <div key={r.id} className="bg-white rounded-lg shadow p-6">

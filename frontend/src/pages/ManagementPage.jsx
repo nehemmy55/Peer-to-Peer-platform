@@ -1,6 +1,7 @@
 import React from 'react';
 import { Users, Award, BookOpen } from 'lucide-react';
 
+// Admin management page component
 export default function ManagementPage() {
   return (
     <div className="container mx-auto px-4 py-8">
@@ -14,6 +15,7 @@ export default function ManagementPage() {
           </div>
         </div>
       </div>
+       {/* Features section */}
        <div className="py-16 px-4 bg-gray-50">
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose Peer to Peer Platform?</h2>

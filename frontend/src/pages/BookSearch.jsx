@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Component for searching and displaying books
 export default function BookSearch({ searchBooks, bookResults, bookLoading, bookError }) {
   return (
     <div className="container mx-auto px-4 py-10">

@@ -1,9 +1,11 @@
 import React from 'react';
 import { MessageCircle, Users, Award, BookOpen } from 'lucide-react';
 
+// Homepage component with overview and navigation
 export default function HomePage({ subjects, setSelectedSubject, setCurrentPage, user, setShowQuestionModal, setShowAuthModal, questions, topContributors }) {
   return (
     <div>
+      {/* Hero section */}
       <div
         className="relative text-white py-24 px-4"
         style={{
@@ -29,6 +31,7 @@ export default function HomePage({ subjects, setSelectedSubject, setCurrentPage,
         </div>
       </div>
 
+      {/* Features section */}
       <div className="py-16 px-4 bg-gray-50">
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose Peer to Peer Platform?</h2>
@@ -58,6 +61,7 @@ export default function HomePage({ subjects, setSelectedSubject, setCurrentPage,
         </div>
       </div>
 
+      {/* Subjects section */}
       <div className="py-16 px-4">
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-8">Browse by Subject</h2>
@@ -69,6 +73,7 @@ export default function HomePage({ subjects, setSelectedSubject, setCurrentPage,
         </div>
       </div>
 
+      {/* Recent questions section */}
       <div className="py-16 px-4 bg-gray-50">
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-8">Recent Questions</h2>

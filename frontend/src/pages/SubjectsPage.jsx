@@ -1,5 +1,6 @@
 import React from 'react';
 
+// Subjects browsing page
 export default function SubjectsPage({ subjects, setSelectedSubject, setCurrentPage }) {
   const subjectsList = subjects.length ? subjects : ['Mathematics','Physics','Chemistry','Biology','Computer Science','Economics','History','Literature'];
   return (

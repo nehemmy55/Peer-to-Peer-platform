@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bell, LogOut, Menu, X } from 'lucide-react';
 
+// Admin dashboard for user management
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -11,6 +12,7 @@ export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Fetch users and pending teachers on component mount
   useEffect(() => {
     const run = async () => {
       setLoading(true);
@@ -42,6 +44,7 @@ export default function AdminDashboard() {
     run();
   }, []);
 
+  // Filter users based on search and status
   const filtered = useMemo(() => {
     const ql = q.trim().toLowerCase();
     return (users || [])
@@ -53,6 +56,7 @@ export default function AdminDashboard() {
       });
   }, [users, q, status]);
 
+  // Status chip styling
   const chip = (s) => {
     const tone = s === 'Active' ? 'bg-green-100 text-green-800' :
                  s === 'Inactive' ? 'bg-gray-100 text-gray-800' :
@@ -60,6 +64,7 @@ export default function AdminDashboard() {
     return <span className={`text-xs px-2 py-1 rounded ${tone}`}>{s}</span>;
   };
 
+  // Delete user from system
   const handleDeleteUser = async (userId) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     
@@ -77,6 +82,7 @@ export default function AdminDashboard() {
     }
   };
 
+  // Approve or reject teacher applications
   const handleTeacherAction = async (teacherId, action) => {
     try {
       const res = await fetch(`/api/admin/teachers/${teacherId}/${action}`, {
@@ -99,6 +105,7 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="flex">
+        {/* Sidebar navigation */}
         <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r min-h-screen transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
@@ -128,6 +135,7 @@ export default function AdminDashboard() {
           </div>
         </aside>
 
+        {/* Mobile overlay */}
         {sidebarOpen && (
           <div 
             className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
@@ -135,6 +143,7 @@ export default function AdminDashboard() {
           />
         )}
 
+        {/* Main content area */}
         <main className="flex-1 p-4 lg:p-6 w-full lg:w-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -152,6 +161,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* Search and filter controls */}
           <div className="bg-white rounded-lg shadow p-4 mb-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <input
@@ -174,6 +184,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
+          {/* Users table */}
           <div className="bg-white rounded-lg shadow overflow-x-auto">
             <div className="min-w-full">
               <div className="hidden lg:grid grid-cols-12 px-4 py-3 border-b text-sm text-gray-600">
@@ -189,6 +200,7 @@ export default function AdminDashboard() {
                 <div className="p-6 text-center text-gray-600">No users found.</div>
               ) : (
                 <>
+                  {/* Desktop view */}
                   <div className="hidden lg:block">
                     {filtered.map((u) => (
                       <div key={u.id} className="grid grid-cols-12 px-4 py-4 border-b items-center">
@@ -216,6 +228,7 @@ export default function AdminDashboard() {
                       </div>
                     ))}
                   </div>
+                  {/* Mobile view */}
                   <div className="lg:hidden">
                     {filtered.map((u) => (
                       <div key={u.id} className="px-4 py-4 border-b space-y-2">
@@ -259,6 +272,7 @@ export default function AdminDashboard() {
         </main>
       </div>
 
+      {/* Teacher approvals modal */}
       {showTeacherApprovals && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">

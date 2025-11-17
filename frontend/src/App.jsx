@@ -14,6 +14,7 @@ import ManagementPage from './pages/ManagementPage';
 import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
+// Main application component
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [adminNotifications, setAdminNotifications] = useState([]);
@@ -43,6 +44,7 @@ const App = () => {
 
   const subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'History', 'Literature', 'Computer Science', 'Psychology'];
 
+  // Check if user is logged in on app start
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
@@ -61,6 +63,7 @@ const App = () => {
       });
   }, []);
 
+  // Load top contributors
   useEffect(() => {
     const controller = new AbortController();
     fetch('/api/contributors', { signal: controller.signal })
@@ -76,6 +79,7 @@ const App = () => {
     return () => controller.abort();
   }, []);
 
+  // Load questions based on selected subject
   useEffect(() => {
     const controller = new AbortController();
     const run = async () => {
@@ -116,6 +120,7 @@ const App = () => {
     return () => controller.abort();
   }, [selectedSubject]);
 
+  // Load student notifications
   useEffect(() => {
     if (!user) { setStudentNotifications([]); return; }
     const controller = new AbortController();
@@ -135,6 +140,7 @@ const App = () => {
     return () => controller.abort();
   }, [user]);
 
+  // Search books using Google Books API
   const searchBooks = async (query) => {
     if (!query.trim()) {
       setBookResults([]);
@@ -153,6 +159,7 @@ const App = () => {
     }
   };
 
+  // Handle user login
   const handleLogin = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -189,6 +196,7 @@ const App = () => {
     }
   };
 
+  // Handle user registration
   const handleSignup = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -239,12 +247,14 @@ const App = () => {
     }
   };
 
+  // Handle user logout
   const handleLogout = () => {
     localStorage.removeItem('token');
     setUser(null);
     setCurrentPage('home');
   };
 
+  // Approve an answer
   const approveAnswer = (questionId, answerId) => {
     fetch(`/api/answers/${answerId}/status`, {
       method: 'PATCH',
@@ -274,6 +284,7 @@ const App = () => {
     });
   };
 
+  // Reject an answer
   const rejectAnswer = (questionId, answerId) => {
     fetch(`/api/answers/${answerId}/status`, {
       method: 'PATCH',
@@ -303,6 +314,7 @@ const App = () => {
     });
   };
 
+  // Mark student notification as read
   const markStudentNotifRead = (notificationId) => {
     setStudentNotifications(prev => 
       prev.map(notif => 
@@ -340,6 +352,7 @@ const App = () => {
         />
       )}
 
+      {/* Render current page based on state */}
       {currentPage === 'home' && (
         <HomePage
           subjects={subjects}
