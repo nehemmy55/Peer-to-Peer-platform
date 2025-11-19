@@ -14,6 +14,9 @@ import ManagementPage from './pages/ManagementPage';
 import TeacherDashboard from './pages/TeacherDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
+// API base URL from environment variables
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 // Main application component
 const App = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -48,7 +51,7 @@ const App = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
-    fetch('/api/auth/me', {
+    fetch(`${API_BASE}/api/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -66,7 +69,7 @@ const App = () => {
   // Load top contributors
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/contributors', { signal: controller.signal })
+    fetch(`${API_BASE}/api/contributors`, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : Promise.reject()))
       .then((data) => {
         if (Array.isArray(data?.contributors)) {
@@ -90,7 +93,7 @@ const App = () => {
         if (token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
-        const res = await fetch(`/api/questions${qs}`, { 
+        const res = await fetch(`${API_BASE}/api/questions${qs}`, { 
           signal: controller.signal,
           headers
         });
@@ -126,7 +129,7 @@ const App = () => {
     const controller = new AbortController();
     const run = async () => {
       try {
-        const res = await fetch('/api/notifications/my', {
+        const res = await fetch(`${API_BASE}/api/notifications/my`, {
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           signal: controller.signal
         });
@@ -168,7 +171,7 @@ const App = () => {
       password: formData.get('password'),
     };
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -212,7 +215,7 @@ const App = () => {
       return;
     }
     try {
-      const res = await fetch('/api/auth/signup', {
+      const res = await fetch(`${API_BASE}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -256,7 +259,7 @@ const App = () => {
 
   // Approve an answer
   const approveAnswer = (questionId, answerId) => {
-    fetch(`/api/answers/${answerId}/status`, {
+    fetch(`${API_BASE}/api/answers/${answerId}/status`, {
       method: 'PATCH',
       headers: { 
         'Content-Type': 'application/json',
@@ -286,7 +289,7 @@ const App = () => {
 
   // Reject an answer
   const rejectAnswer = (questionId, answerId) => {
-    fetch(`/api/answers/${answerId}/status`, {
+    fetch(`${API_BASE}/api/answers/${answerId}/status`, {
       method: 'PATCH',
       headers: { 
         'Content-Type': 'application/json',

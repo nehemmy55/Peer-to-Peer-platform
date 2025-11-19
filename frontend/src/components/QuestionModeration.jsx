@@ -1,11 +1,17 @@
 import React from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
+import React from 'react';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
+
+// API base URL from environment variables
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 // Component for moderating questions (teacher view)
 export default function QuestionModeration({ questions, setQuestions }) {
   // Update question verification status
   const updateQuestionStatus = (id, verified) => {
-    fetch(`/api/questions/${id}/status`, {
+    fetch(`${API_BASE}/api/questions/${id}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -57,3 +63,4 @@ export default function QuestionModeration({ questions, setQuestions }) {
     </div>
   );
 }
+

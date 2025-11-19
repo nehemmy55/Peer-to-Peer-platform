@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
+// API base URL from environment variables
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 // Questions listing page with filtering and voting
 export default function QuestionsPage({ questions, selectedSubject, setSelectedSubject, searchQuery, questionsLoading, answersByQuestion, setSelectedQuestion, setShowQuestionDetailModal, user, setQuestions }) {
   const [votingQuestions, setVotingQuestions] = useState(new Set());
@@ -28,7 +31,7 @@ export default function QuestionsPage({ questions, selectedSubject, setSelectedS
 
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`/api/questions/${questionId}/vote`, {
+      const res = await fetch(`${API_BASE}/api/questions/${questionId}/vote`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

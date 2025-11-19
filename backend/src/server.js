@@ -17,10 +17,19 @@ import adminRouter from './routes/admin.js';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// CORS configuration for production
+app.use(cors({
+  origin: [
+    'http://localhost:5173', 
+    'https://peertopeer-platform.netlify.app/', 
+    process.env.FRONTEND_URL 
+  ].filter(Boolean),
+  credentials: true
+}));
+
 app.use(express.json());
 
-// Create or update admin user on startup
 const upsertAdmin = async () => {
   try {
     const adminEmail = 'admin@gmail.com';
@@ -57,7 +66,7 @@ const upsertAdmin = async () => {
   }
 };
 
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/p2p-learning')
   .then(async () => {
     console.log('MongoDB connected');
     await upsertAdmin();
@@ -80,11 +89,16 @@ app.use((req, res, next) => {
 
 const server = http.createServer(app);
 const io = new SocketIOServer(server, {
-  cors: { origin: '*' }
+  cors: { 
+    origin: [
+      'http://localhost:5173',
+      'https://peertopeer-platform.netlify.app',
+      process.env.FRONTEND_URL
+    ].filter(Boolean)
+  }
 });
 app.set('io', io);
 
-// Socket.IO connection handling
 io.on('connection', (socket) => {
   try {
     const { token } = socket.handshake.auth || {};
@@ -97,6 +111,6 @@ io.on('connection', (socket) => {
   }
 });
 
-server.listen(process.env.PORT || 5000, () => {
-  console.log('Server running');
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
