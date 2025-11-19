@@ -1,8 +1,7 @@
 import React from 'react';
 import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
-import React from 'react';
-import { ThumbsUp, ThumbsDown } from 'lucide-react';
+
 
 // API base URL from environment variables
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
