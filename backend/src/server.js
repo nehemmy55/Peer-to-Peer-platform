@@ -10,8 +10,8 @@ import answersRouter from './routes/answers.js';
 import contributorsRouter from './routes/contributors.js';
 import notificationsRouter from './routes/notifications.js';
 import http from 'http';
-import pkg from 'socket.io';
-const { Server: SocketIOServer } = pkg;
+import { Server } from 'socket.io';
+const SocketIOServer = Server;
 import jwt from 'jsonwebtoken';
 import adminRouter from './routes/admin.js';
 
