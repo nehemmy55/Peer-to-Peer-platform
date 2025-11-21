@@ -4,6 +4,9 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  # Only allow VITE_API_BASE_URL to be public (it's safe - just a public API URL)
+  # JWT_SECRET and MONGODB_URI should NOT be set here - they're backend only
+  SECRETS_SCAN_OMIT_KEYS = "VITE_API_BASE_URL"
 
 [[redirects]]
   from = "/*"
