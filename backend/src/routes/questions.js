@@ -4,36 +4,85 @@ import User from '../models/User.js';
 import Question from '../models/Question.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import Answer from '../models/Answer.js';
+import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
+// Helper to get user from token
+const getUserFromToken = async (req) => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) return null;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'devsecret');
+    const user = await User.findById(decoded.id).lean();
+    return user;
+  } catch {
+    return null;
+  }
+};
+
 // Get questions with filtering
 router.get('/', async (req, res) => {
-  const { subject, all } = req.query;
-  const filter = subject && subject !== 'all' ? { subject } : {};
-  const items = await Question.find(filter).sort({ createdAt: -1 }).limit(100);
-  const withCounts = await Promise.all(
-    items.map(async (q) => {
-      const count = await Answer.countDocuments({ questionId: q._id, status: 'approved' });
-      return {
-        id: q._id,
-        title: q.title,
-        subject: q.subject,
-        author: q.author,
-        content: q.content,
-        votes: q.votes || 0,
-        verified: q.verified,
-        answers: count,
-        timestamp: q.createdAt
-      };
-    })
-  );
-  res.json({ questions: withCounts });
+  try {
+    // Check if database is connected
+    if (mongoose.connection.readyState !== 1) {
+      console.warn('Database not connected, returning empty questions');
+      return res.json({ questions: [] });
+    }
+
+    const { subject, all } = req.query;
+    
+    // Get user role if authenticated
+    const user = await getUserFromToken(req);
+    const userRole = user?.role;
+
+    // Build filter
+    const filter = {};
+    if (subject && subject !== 'all') {
+      filter.subject = subject;
+    }
+    
+    // For non-admin and non-teacher users, only show verified questions
+    if (userRole !== 'admin' && userRole !== 'teacher') {
+      filter.verified = true;
+    }
+
+    const items = await Question.find(filter).sort({ createdAt: -1 }).limit(100);
+    const withCounts = await Promise.all(
+      items.map(async (q) => {
+        const count = await Answer.countDocuments({ questionId: q._id, status: 'approved' });
+        return {
+          id: q._id,
+          title: q.title,
+          subject: q.subject,
+          author: q.author,
+          content: q.content,
+          votes: q.votes || 0,
+          verified: q.verified,
+          answers: count,
+          timestamp: q.createdAt
+        };
+      })
+    );
+    res.json({ questions: withCounts });
+  } catch (e) {
+    console.error('Get questions error:', e);
+    res.status(500).json({ error: 'Failed to fetch questions', questions: [] });
+  }
 });
 
 // Create new question
 router.post('/', requireAuth, async (req, res) => {
   try {
+    
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    const dbName = mongoose.connection.db?.databaseName;
+    console.log(' Creating question in database:', dbName);
+
     const { title, subject, content } = req.body || {};
     if (!title || !subject || !content) {
       return res.status(400).json({ error: 'Missing title, subject, or content' });
@@ -49,6 +98,10 @@ router.post('/', requireAuth, async (req, res) => {
       content
     });
 
+    console.log(' Question created with ID:', created._id);
+    console.log(' Saved to database:', dbName);
+    console.log(' Collection: questions');
+
     res.status(201).json({
       id: created._id,
       title: created.title,
@@ -62,6 +115,7 @@ router.post('/', requireAuth, async (req, res) => {
     });
   } catch (e) {
     console.error('Create question error:', e);
+    console.error('Database:', mongoose.connection.db?.databaseName);
     res.status(500).json({ error: 'Failed to create question' });
   }
 });

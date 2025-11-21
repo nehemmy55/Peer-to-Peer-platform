@@ -149,7 +149,7 @@ export default function NavBar({
                             <button className="text-blue-600 text-sm hover:text-blue-700" onClick={() => { setCurrentPage('teacher'); setShowNotifications(false); }}>View Dashboard</button>
                           </div>
                         </>
-                      ) : (
+                      ) : user.role === 'admin' ? (
                         <>
                           <div className="px-3 py-2 border-b font-medium">Pending Teacher Approvals</div>
                           {adminNotifCount === 0 ? (
@@ -182,6 +182,38 @@ export default function NavBar({
                           <div className="px-3 py-2 flex items-center justify-between">
                             <span className="text-xs text-gray-600">Total pending: {adminNotifCount}</span>
                           </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="px-3 py-2 border-b font-medium">Notifications</div>
+                          {studentNotifCount === 0 ? (
+                            <div className="px-3 py-3 text-sm text-gray-600">No new notifications.</div>
+                          ) : (
+                            <div className="max-h-64 overflow-auto">
+                              {studentNotifications.slice(0, 10).map((n, idx) => (
+                                <div key={n._id || n.id || idx} className="px-3 py-2 border-b hover:bg-gray-50 cursor-pointer" onClick={() => { if (markStudentNotifRead) markStudentNotifRead(n._id || n.id); setShowNotifications(false); }}>
+                                  <div className="text-sm font-medium text-green-700">{n.message || n.title || 'New Update'}</div>
+                                  {n.content && (
+                                    <div className="text-xs text-gray-600 mt-1 truncate">{n.content}</div>
+                                  )}
+                                  {n.timestamp && (
+                                    <div className="text-xs text-gray-400 mt-1">{new Date(n.timestamp).toLocaleString()}</div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {studentNotifCount > 0 && (
+                            <div className="px-3 py-2 flex items-center justify-between border-t">
+                              <span className="text-xs text-gray-600">Total: {studentNotifCount}</span>
+                              <button 
+                                className="text-blue-600 text-sm hover:text-blue-700"
+                                onClick={() => { setCurrentPage('questions'); setShowNotifications(false); }}
+                              >
+                                View All
+                              </button>
+                            </div>
+                          )}
                         </>
                       )}
                     </div>

@@ -3,44 +3,72 @@ import Answer from '../models/Answer.js';
 import Question from '../models/Question.js';
 import User from '../models/User.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
 // Get answers with filtering
 router.get('/', requireAuth, async (req, res) => {
-  const { status, subject } = req.query;
-  const filter = {};
-  if (status && status !== 'all') filter.status = status;
-  const answers = await Answer.find(filter).sort({ createdAt: -1 }).limit(200);
+  try {
+    console.log(' GET /api/answers - Request received');
+    console.log(' Database state:', mongoose.connection.readyState);
+    
+    // Check if database is connected
+    if (mongoose.connection.readyState !== 1) {
+      console.warn(' Database not connected');
+      return res.status(503).json({ error: 'Database not connected', answers: [] });
+    }
 
-  let results = answers;
-  if (subject && subject !== 'all') {
-    const ids = answers.map((a) => a.questionId);
-    const qs = await Question.find({ _id: { $in: ids }, subject });
-    const allowed = new Set(qs.map((q) => String(q._id)));
-    results = answers.filter((a) => allowed.has(String(a.questionId)));
+    const { status, subject } = req.query;
+    console.log(' Query params:', { status, subject });
+    
+    const filter = {};
+    if (status && status !== 'all') filter.status = status;
+    
+    console.log(' Filter:', filter);
+    const answers = await Answer.find(filter).sort({ createdAt: -1 }).limit(200);
+    console.log(' Found answers:', answers.length);
+
+    let results = answers;
+    if (subject && subject !== 'all') {
+      const ids = answers.map((a) => a.questionId);
+      const qs = await Question.find({ _id: { $in: ids }, subject });
+      const allowed = new Set(qs.map((q) => String(q._id)));
+      results = answers.filter((a) => allowed.has(String(a.questionId)));
+    }
+
+    const normalized = await Promise.all(
+      results.map(async (a) => {
+        const q = await Question.findById(a.questionId);
+        return {
+          id: a._id,
+          questionId: a.questionId,
+          content: a.content,
+          author: a.author,
+          status: a.status,
+          subject: q?.subject || 'Unknown',
+          timestamp: a.createdAt
+        };
+      })
+    );
+    res.json({ answers: normalized });
+  } catch (error) {
+    console.error('Get answers error:', error);
+    res.status(500).json({ error: 'Failed to fetch answers', answers: [] });
   }
-
-  const normalized = await Promise.all(
-    results.map(async (a) => {
-      const q = await Question.findById(a.questionId);
-      return {
-        id: a._id,
-        questionId: a.questionId,
-        content: a.content,
-        author: a.author,
-        status: a.status,
-        subject: q?.subject || 'Unknown',
-        timestamp: a.createdAt
-      };
-    })
-  );
-  res.json({ answers: normalized });
 });
 
 // Create new answer
 router.post('/', requireAuth, async (req, res) => {
   try {
+    // Check database connection
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ error: 'Database not connected' });
+    }
+
+    const dbName = mongoose.connection.db?.databaseName;
+    console.log(' Creating answer in database:', dbName);
+
     const { questionId, content } = req.body || {};
     if (!questionId || !content) {
       return res.status(400).json({ error: 'Missing questionId or content' });
@@ -59,6 +87,10 @@ router.post('/', requireAuth, async (req, res) => {
       status: 'pending'
     });
 
+    console.log(' Answer created with ID:', created._id);
+    console.log(' Saved to database:', dbName);
+    console.log(' Collection: answers');
+
     return res.status(201).json({
       id: created._id,
       questionId: created.questionId,
@@ -69,6 +101,7 @@ router.post('/', requireAuth, async (req, res) => {
     });
   } catch (e) {
     console.error('Create answer error:', e);
+    console.error('Database:', mongoose.connection.db?.databaseName);
     return res.status(500).json({ error: 'Failed to create answer' });
   }
 });
@@ -90,6 +123,36 @@ router.patch('/:id/status', requireAuth, requireRole('teacher'), async (req, res
   } catch (e) {
     console.error('Update answer status error:', e);
     return res.status(500).json({ error: 'Failed to update answer status' });
+  }
+});
+
+// Approve answer endpoint
+router.patch('/:id/approve', requireAuth, requireRole('teacher'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await Answer.findByIdAndUpdate(id, { status: 'approved' }, { new: true });
+    if (!updated) {
+      return res.status(404).json({ error: 'Answer not found' });
+    }
+    return res.json({ ok: true, status: updated.status });
+  } catch (e) {
+    console.error('Approve answer error:', e);
+    return res.status(500).json({ error: 'Failed to approve answer' });
+  }
+});
+
+// Reject answer endpoint
+router.patch('/:id/reject', requireAuth, requireRole('teacher'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await Answer.findByIdAndUpdate(id, { status: 'rejected' }, { new: true });
+    if (!updated) {
+      return res.status(404).json({ error: 'Answer not found' });
+    }
+    return res.json({ ok: true, status: updated.status });
+  } catch (e) {
+    console.error('Reject answer error:', e);
+    return res.status(500).json({ error: 'Failed to reject answer' });
   }
 });
 
