@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, BookOpen, LogOut, Menu, MessageCircle, ThumbsDown, ThumbsUp, Upload, Users, X } from 'lucide-react';
+import { Award, Bell, BookOpen, LogOut, Menu, MessageCircle, ThumbsDown, ThumbsUp, Upload, Users, X } from 'lucide-react';
 import NavBar from './components/NavBar';
 import AuthModal from './components/AuthModal';
 import Footer from './components/Footer';
