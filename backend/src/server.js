@@ -23,6 +23,7 @@ const app = express();
 app.use(cors({
   origin: [
     'https://peertopeer-platform.netlify.app',
+    /https:\/\/.*--peertopeer-platform\.netlify\.app$/,  // Allow deploy previews
     'http://localhost:5173'
   ],
   credentials: true,
@@ -252,6 +253,7 @@ const io = new SocketIOServer(server, {
   cors: { 
     origin: [
       'https://peertopeer-platform.netlify.app',
+      /https:\/\/.*--peertopeer-platform\.netlify\.app$/,  // Allow deploy previews
       'http://localhost:5173'
     ]
   }
