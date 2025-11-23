@@ -19,19 +19,24 @@ dotenv.config();
 
 const app = express();
 
-// Enhanced CORS for production
+// Enhanced CORS for production with logging
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('CORS request from origin:', origin);
+    
     const allowedOrigins = [
       'https://peertopeer-platform.netlify.app',
       'http://localhost:5173'
     ];
-    // Allow Netlify deploy previews (any subdomain)
-    const isNetlifyPreview = origin && origin.match(/^https:\/\/.*--peertopeer-platform\.netlify\.app$/);
+    
+    // Allow Netlify deploy previews (any subdomain ending with --peertopeer-platform.netlify.app)
+    const isNetlifyPreview = origin && origin.includes('--peertopeer-platform.netlify.app');
     
     if (!origin || allowedOrigins.includes(origin) || isNetlifyPreview) {
+      console.log('✅ CORS allowed for:', origin);
       callback(null, true);
     } else {
+      console.log('❌ CORS blocked for:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -265,7 +270,7 @@ const io = new SocketIOServer(server, {
         'https://peertopeer-platform.netlify.app',
         'http://localhost:5173'
       ];
-      const isNetlifyPreview = origin && origin.match(/^https:\/\/.*--peertopeer-platform\.netlify\.app$/);
+      const isNetlifyPreview = origin && origin.includes('--peertopeer-platform.netlify.app');
       
       if (!origin || allowedOrigins.includes(origin) || isNetlifyPreview) {
         callback(null, true);
