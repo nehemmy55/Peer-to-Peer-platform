@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Upload } from 'lucide-react';
+import UploadResourceModal from '../components/UploadResourceModal';
 
 // Resources page for books and study materials
-export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bookLoading, bookError, bookResults, resources, setShowAuthModal, user }) {
+export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bookLoading, bookError, bookResults, resources, setResources, setShowAuthModal, user }) {
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const safeBookResults = Array.isArray(bookResults) ? bookResults : [];
   const safeResources = Array.isArray(resources) ? resources : [];
 
@@ -10,11 +12,21 @@ export default function ResourcesPage({ bookQuery, setBookQuery, searchBooks, bo
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
         <h2 className="text-2xl font-bold">Shared Resources</h2>
-        <button onClick={() => user ? alert('Upload feature coming soon!') : setShowAuthModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded flex items-center space-x-2">
+        <button onClick={() => user ? setShowUploadModal(true) : setShowAuthModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded flex items-center space-x-2">
           <Upload className="w-5 h-5" />
           <span>Upload Resource</span>
         </button>
       </div>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <UploadResourceModal 
+          subjects={['Mathematics', 'Science', 'History', 'Literature', 'Computer Science']}
+          setShowUploadModal={setShowUploadModal}
+          user={user}
+          setResources={setResources}
+        />
+      )}
 
       {/* Book search section */}
       <div className="bg-white rounded-lg shadow p-4 mb-8">

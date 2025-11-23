@@ -392,6 +392,10 @@ const App = () => {
           bookError={bookError}
           bookQuery={bookQuery}
           setBookQuery={setBookQuery}
+          resources={resources}
+          setResources={setResources}
+          user={user}
+          setShowAuthModal={setShowAuthModal}
         />
       )}
 

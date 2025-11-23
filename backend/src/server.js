@@ -9,6 +9,7 @@ import questionsRouter from './routes/questions.js';
 import answersRouter from './routes/answers.js';
 import contributorsRouter from './routes/contributors.js';
 import notificationsRouter from './routes/notifications.js';
+import resourcesRouter from './routes/resources.js';
 import http from 'http';
 import { Server } from 'socket.io';
 const SocketIOServer = Server;
@@ -216,6 +217,7 @@ app.use('/api/answers', answersRouter);
 app.use('/api/contributors', contributorsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/resources', resourcesRouter);
 
 // to check which database is connected
 app.get('/api/db-info', (req, res) => {
