@@ -1,4 +1,4 @@
-Here's an improved README with additions that would be valuable for a software engineering student:
+
 
 ```markdown
 # Peer-to-Peer Learning Platform
