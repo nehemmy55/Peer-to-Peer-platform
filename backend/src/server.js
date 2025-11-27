@@ -72,6 +72,40 @@ app.get('/', (req, res) => {
     }
   });
 });
+app.post("/api/auth/login", async (req, res) => {
+  const { identifier, password } = req.body;
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: identifier },
+          { phone: identifier }
+        ]
+      }
+    });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.password !== password)
+      return res.status(401).json({ message: "Invalid credentials" });
+
+    // Save session
+    req.session.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email
+    };
+
+    res.status(200).json({
+      message: "Login successful",
+      user: req.session.user
+    });
+
+  } catch (error) {
+    console.error("Error logging in:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // Health check
 app.get('/health', (req, res) => {
