@@ -72,40 +72,44 @@ app.get('/', (req, res) => {
     }
   });
 });
+// Replace your current inline /api/auth/login route with this:
+
 app.post("/api/auth/login", async (req, res) => {
-  const { identifier, password } = req.body;
+  const { email, password } = req.body; // frontend sends email & password
 
   try {
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: identifier },
-          { phone: identifier }
-        ]
-      }
-    });
-
+    // Find user in MongoDB
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
-    if (user.password !== password)
-      return res.status(401).json({ message: "Invalid credentials" });
 
-    // Save session
-    req.session.user = {
-      id: user.id,
-      name: user.name,
-      email: user.email
-    };
+    // Compare password
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role, email: user.email },
+      process.env.JWT_SECRET || "devsecret",
+      { expiresIn: "7d" }
+    );
 
     res.status(200).json({
       message: "Login successful",
-      user: req.session.user
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
     });
 
-  } catch (error) {
-    console.error("Error logging in:", error);
+  } catch (err) {
+    console.error("Error logging in:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 // Health check
 app.get('/health', (req, res) => {
