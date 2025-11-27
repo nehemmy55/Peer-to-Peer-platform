@@ -143,7 +143,7 @@ const upsertAdmin = async () => {
 
 const createTestUsers = async () => {
   try {
-    console.log('📝 Creating test users...');
+    console.log('Creating test users...');
     
     const testStudentEmail = 'student@test.com';
     let student = await User.findOne({ email: testStudentEmail });
