@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
-// Modal for asking new questions
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
 export default function QuestionModal({ subjects, setShowQuestionModal, setShowAuthModal, user, setQuestions, setAnswersByQuestion }) {
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState(subjects[0] || 'Mathematics');
@@ -9,23 +10,25 @@ export default function QuestionModal({ subjects, setShowQuestionModal, setShowA
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // Submit new question
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
     if (!title.trim() || !details.trim()) {
       setError('Please fill in the title and details.');
       return;
     }
+
     const token = localStorage.getItem('token');
     if (!token) {
       setShowQuestionModal(false);
       setShowAuthModal(true);
       return;
     }
+
     setSubmitting(true);
     try {
-      const res = await fetch('/api/questions', {
+      const res = await fetch(`${API_BASE}/api/questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,8 +36,10 @@ export default function QuestionModal({ subjects, setShowQuestionModal, setShowA
         },
         body: JSON.stringify({ title: title.trim(), subject, content: details.trim() }),
       });
+
       if (!res.ok) throw new Error('Failed to post question');
       const created = await res.json();
+
       const uiQuestion = {
         id: created.id ?? Date.now(),
         title: created.title ?? title.trim(),
@@ -46,15 +51,18 @@ export default function QuestionModal({ subjects, setShowQuestionModal, setShowA
         timestamp: 'just now',
         content: created.content ?? details.trim(),
       };
-      setQuestions((prev) => {
+
+      setQuestions(prev => {
         const updated = [uiQuestion, ...prev];
         localStorage.setItem('questions', JSON.stringify(updated));
         return updated;
       });
-      setAnswersByQuestion((prev) => ({ ...prev, [uiQuestion.id]: [] }));
+
+      setAnswersByQuestion(prev => ({ ...prev, [uiQuestion.id]: [] }));
       setShowQuestionModal(false);
+
     } catch (err) {
-      console.error('Error posting question:', err);
+      console.error(err);
       setError('Unable to post your question. Please try again.');
     } finally {
       setSubmitting(false);
@@ -77,7 +85,7 @@ export default function QuestionModal({ subjects, setShowQuestionModal, setShowA
           <div>
             <label className="block text-sm font-medium mb-1">Subject</label>
             <select value={subject} onChange={(e) => setSubject(e.target.value)} className="w-full px-3 py-2 border rounded outline-none focus:ring-2 focus:ring-blue-500" disabled={submitting}>
-              {subjects.map((s) => (<option key={s} value={s}>{s}</option>))}
+              {subjects.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>

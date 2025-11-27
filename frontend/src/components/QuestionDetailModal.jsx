@@ -1,30 +1,19 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 
-// Modal for viewing question details and answers
-export default function QuestionDetailModal({
-  selectedQuestion,
-  answersByQuestion,
-  setAnswersByQuestion,
-  user,
-  setShowQuestionDetailModal,
-  setSelectedQuestion,
-  setShowAuthModal,
-}) {
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
+export default function QuestionDetailModal({ selectedQuestion, answersByQuestion, setAnswersByQuestion, user, setShowQuestionDetailModal, setSelectedQuestion, setShowAuthModal }) {
   const [replyContent, setReplyContent] = useState('');
   const [replyLoading, setReplyLoading] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
 
   if (!selectedQuestion) return null;
 
   const questionAnswers = answersByQuestion[selectedQuestion.id] || [];
   const approvedAnswers = questionAnswers.filter(a => a.status === 'approved');
+  const myLatestAnswer = user ? [...questionAnswers].reverse().find(a => a.author === user.name) : null;
 
-  const myLatestAnswer = user
-    ? [...questionAnswers].reverse().find(a => a.author === user.name)
-    : null;
-  const [showStatusModal, setShowStatusModal] = useState(false);
-
-  // Submit answer to question
   const handleReplySubmit = async (e) => {
     e.preventDefault();
     if (!replyContent.trim() || !user) {
@@ -38,7 +27,7 @@ export default function QuestionDetailModal({
     setReplyLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/answers', {
+      const response = await fetch(`${API_BASE}/api/answers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,28 +39,27 @@ export default function QuestionDetailModal({
         })
       });
 
-      if (response.ok) {
-        const newAnswer = await response.json();
-        setAnswersByQuestion(prev => ({
-          ...prev,
-          [selectedQuestion.id]: [
-            ...(prev[selectedQuestion.id] || []),
-            {
-              id: newAnswer.id || `temp-${Date.now()}`,
-              author: user.name,
-              content: replyContent.trim(),
-              status: 'pending',
-              timestamp: 'just now'
-            }
-          ]
-        }));
-        setReplyContent('');
-        alert('Your answer has been submitted and is pending approval!');
-      } else {
-        throw new Error('Failed to submit answer');
-      }
-    } catch (error) {
-      console.error('Error submitting answer:', error);
+      if (!response.ok) throw new Error('Failed to submit answer');
+      const newAnswer = await response.json();
+
+      setAnswersByQuestion(prev => ({
+        ...prev,
+        [selectedQuestion.id]: [
+          ...(prev[selectedQuestion.id] || []),
+          {
+            id: newAnswer.id ?? `temp-${Date.now()}`,
+            author: user.name,
+            content: replyContent.trim(),
+            status: 'pending',
+            timestamp: 'just now'
+          }
+        ]
+      }));
+
+      setReplyContent('');
+      alert('Your answer has been submitted and is pending approval!');
+    } catch (err) {
+      console.error(err);
       alert('Failed to submit answer. Please try again.');
     } finally {
       setReplyLoading(false);
@@ -103,17 +91,16 @@ export default function QuestionDetailModal({
 
         <div className="mb-6">
           <h3 className="text-xl font-bold mb-4">Answers ({approvedAnswers.length})</h3>
-
           {approvedAnswers.length === 0 ? (
             <div className="bg-gray-50 rounded-lg p-6 text-center text-gray-600">No approved answers yet. Be the first to help!</div>
           ) : (
             <div className="space-y-4">
-              {approvedAnswers.map((answer) => (
-                <div key={answer.id} className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-gray-800 mb-3">{answer.content}</p>
+              {approvedAnswers.map(a => (
+                <div key={a.id} className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-800 mb-3">{a.content}</p>
                   <div className="flex items-center gap-3 text-sm text-gray-600">
-                    <span>By {answer.author}</span>
-                    <span>{answer.timestamp}</span>
+                    <span>By {a.author}</span>
+                    <span>{a.timestamp}</span>
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">Approved</span>
                   </div>
                 </div>
@@ -126,50 +113,14 @@ export default function QuestionDetailModal({
           <div className="border-t pt-6">
             <h3 className="text-lg font-bold mb-4">Your Answer</h3>
             <form onSubmit={handleReplySubmit} className="space-y-4">
-              <div>
-                <textarea value={replyContent} onChange={(e) => setReplyContent(e.target.value)} placeholder="Share your knowledge and help others learn..." rows="4" required className="w-full px-3 py-2 border rounded outline-none focus:ring-2 focus:ring-blue-500" disabled={replyLoading} />
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-600">Your answer will be reviewed before being published.</p>
-                <button type="submit" disabled={replyLoading || !replyContent.trim()} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                  {replyLoading ? (<><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Submitting...</>) : 'Submit Answer'}
-                </button>
-              </div>
+              <textarea value={replyContent} onChange={e => setReplyContent(e.target.value)} placeholder="Share your knowledge..." rows="4" required className="w-full px-3 py-2 border rounded outline-none focus:ring-2 focus:ring-blue-500" disabled={replyLoading} />
+              <button type="submit" disabled={replyLoading || !replyContent.trim()} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">{replyLoading ? 'Submitting...' : 'Submit Answer'}</button>
             </form>
           </div>
         ) : (
           <div className="border-t pt-6 text-center">
             <p className="text-gray-600 mb-4">Please log in to answer this question.</p>
             <button onClick={() => { setSelectedQuestion(null); setShowQuestionDetailModal(false); setShowAuthModal(true); }} className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Log In</button>
-          </div>
-        )}
-
-        {/* Show user's answer status */}
-        {user && myLatestAnswer && (
-          <div className="mb-4">
-            <button
-              className="text-sm text-blue-600 hover:underline"
-              onClick={() => setShowStatusModal(true)}
-            >
-              View Review Status
-            </button>
-            {showStatusModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
-                <div className="bg-white rounded shadow p-4 w-80">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-semibold text-gray-800">Answer Status</div>
-                    <button onClick={() => setShowStatusModal(false)}>
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="text-sm text-gray-700 mb-3">{myLatestAnswer.content}</div>
-                  <div className={`text-xs inline-block px-2 py-1 rounded ${myLatestAnswer.status === 'approved' ? 'bg-green-100 text-green-800' : myLatestAnswer.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}`}>
-                    {myLatestAnswer.status}
-                  </div>
-                  <div className="mt-2 text-xs text-gray-600">{myLatestAnswer.timestamp || ''}</div>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
