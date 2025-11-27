@@ -27,14 +27,13 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (mobile apps, Postman, etc)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log('❌ CORS blocked origin:', origin);
-      callback(null, true); // Allow anyway for debugging
+      console.log(' CORS blocked origin:', origin);
+      callback(null, true);
     }
   },
   credentials: true,
@@ -48,7 +47,6 @@ app.options('*', cors());
 
 app.use(express.json());
 
-// Add request logging with timestamps
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] ${req.method} ${req.url}`);
@@ -59,7 +57,7 @@ app.use((req, res, next) => {
 // Root route 
 app.get('/', (req, res) => {
   res.json({ 
-    message: '✅ Peer to Peer Learning Platform API',
+    message: ' Peer to Peer Learning Platform API',
     status: 'RUNNING',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
@@ -87,7 +85,7 @@ app.get('/health', (req, res) => {
 // Test route
 app.get('/api/test', (req, res) => {
   res.json({ 
-    message: '✅ API is working!',
+    message: ' API is working!',
     endpoint: '/api/test',
     timestamp: new Date().toISOString()
   });
@@ -108,9 +106,9 @@ const upsertAdmin = async () => {
         existingByEmail.password = adminPassword;
         existingByEmail.name = existingByEmail.name || 'Admin';
         await existingByEmail.save();
-        console.log('✅ Admin user updated');
+        console.log(' Admin user updated');
       } else {
-        console.log('✅ Admin user already configured');
+        console.log('Admin user already configured');
       }
       return;
     }
@@ -123,15 +121,15 @@ const upsertAdmin = async () => {
       role: 'admin',
       school: ''
     });
-    console.log('✅ Admin user created');
+    console.log(' Admin user created');
   } catch (error) {
-    console.error('❌ Error ensuring admin user:', error);
+    console.error(' Error ensuring admin user:', error);
   }
 };
 
 const createTestUsers = async () => {
   try {
-    console.log('📝 Creating test users...');
+    console.log('Creating test users...');
     
     const testStudentEmail = 'student@test.com';
     let student = await User.findOne({ email: testStudentEmail });
@@ -148,9 +146,9 @@ const createTestUsers = async () => {
         badge: 'Newcomer',
         status: 'approved'
       });
-      console.log('✅ Test student created:', testStudentEmail);
+      console.log('Test student created:', testStudentEmail);
     } else {
-      console.log('✅ Test student exists:', testStudentEmail);
+      console.log(' Test student exists:', testStudentEmail);
     }
 
     const testTeacherEmail = 'teacher@test.com';
@@ -168,25 +166,25 @@ const createTestUsers = async () => {
         badge: 'Teacher',
         status: 'approved'
       });
-      console.log('✅ Test teacher created:', testTeacherEmail);
+      console.log(' Test teacher created:', testTeacherEmail);
     } else {
-      console.log('✅ Test teacher exists:', testTeacherEmail);
+      console.log(' Test teacher exists:', testTeacherEmail);
     }
   } catch (error) {
-    console.log('⚠️ Could not create test users:', error.message);
+    console.log(' Could not create test users:', error.message);
   }
 };
 
 // MongoDB connection 
-console.log('🔌 Connecting to MongoDB...');
-console.log('📍 Connection URI:', process.env.MONGODB_URI ? 
+console.log(' Connecting to MongoDB...');
+console.log(' Connection URI:', process.env.MONGODB_URI ? 
   process.env.MONGODB_URI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@') : 'NOT SET');
 
 let mongoUri = process.env.MONGODB_URI;
 if (mongoUri && !mongoUri.includes('/?') && !mongoUri.match(/\/[^\/\?]+(\?|$)/)) {
   const dbName = process.env.DB_NAME || 'p2p-learning';
   mongoUri = mongoUri.endsWith('/') ? mongoUri + dbName : mongoUri + '/' + dbName;
-  console.log('✅ Added database name to URI:', dbName);
+  console.log(' Added database name to URI:', dbName);
 }
 
 mongoose.connect(mongoUri || process.env.MONGODB_URI, {
@@ -197,26 +195,25 @@ mongoose.connect(mongoUri || process.env.MONGODB_URI, {
   .then(async () => {
     const dbName = mongoose.connection.db.databaseName;
     const host = mongoose.connection.host;
-    console.log('✅ MongoDB connected successfully');
-    console.log('📊 Database name:', dbName);
-    console.log('🔗 Connection state:', mongoose.connection.readyState);
+    console.log(' MongoDB connected successfully');
+    console.log('Database name:', dbName);
+    console.log('Connection state:', mongoose.connection.readyState);
     await upsertAdmin();
     await createTestUsers();
   })
   .catch(err => {
-    console.error('❌ MongoDB connection error:', err);
-    console.log('⚠️ Continuing without database connection');
+    console.error(' MongoDB connection error:', err);
+    console.log(' Continuing without database connection');
   });
 
-// Register routes - ORDER MATTERS
-console.log('📋 Registering API routes...');
+console.log(' Registering API routes...');
 app.use('/api/auth', authRouter);
 app.use('/api/questions', questionsRouter);
 app.use('/api/answers', answersRouter);
 app.use('/api/contributors', contributorsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/admin', adminRouter);
-console.log('✅ All routes registered');
+console.log(' All routes registered');
 
 // Database info endpoint
 app.get('/api/db-info', (req, res) => {
@@ -240,7 +237,7 @@ app.get('/api/db-info', (req, res) => {
 
 // 404 handler for undefined routes
 app.use((req, res) => {
-  console.log('❌ 404 - Route not found:', req.method, req.originalUrl);
+  console.log(' 404 - Route not found:', req.method, req.originalUrl);
   res.status(404).json({ 
     error: 'Route not found',
     method: req.method,
@@ -265,7 +262,7 @@ app.use((req, res) => {
 
 // Error handler
 app.use((error, req, res, next) => {
-  console.error('❌ Server error:', error);
+  console.error(' Server error:', error);
   res.status(500).json({ 
     error: 'Internal server error',
     message: error.message,
@@ -291,7 +288,7 @@ io.on('connection', (socket) => {
     const payload = jwt.verify(token, process.env.JWT_SECRET || 'devsecret');
     const room = `user:${payload.id}`;
     socket.join(room);
-    console.log(`✅ User ${payload.id} connected to socket`);
+    console.log(` User ${payload.id} connected to socket`);
   } catch {
     socket.disconnect(true);
   }
@@ -301,28 +298,28 @@ io.on('connection', (socket) => {
 mongoose.connection.on('connected', () => {
   const dbName = mongoose.connection.db?.databaseName || 'unknown';
   const host = mongoose.connection.host || 'unknown';
-  console.log('✅ MongoDB connected - Ready for queries');
-  console.log('📊 Active database:', dbName);
-  console.log('🔗 Connected to:', host);
-  console.log('📁 Collections:', Object.keys(mongoose.connection.collections).join(', ') || 'None');
+  console.log(' MongoDB connected - Ready for queries');
+  console.log('Active database:', dbName);
+  console.log(' Connected to:', host);
+  console.log(' Collections:', Object.keys(mongoose.connection.collections).join(', ') || 'None');
 });
 
 mongoose.connection.on('error', (err) => {
-  console.log('❌ MongoDB connection error:', err);
+  console.log(' MongoDB connection error:', err);
 });
 
 mongoose.connection.on('disconnected', () => {
-  console.log('⚠️ MongoDB disconnected');
+  console.log(' MongoDB disconnected');
 });
 
 server.listen(port, () => {
   console.log('\n====================================');
-  console.log('✅ Server running successfully!');
+  console.log(' Server running successfully!');
   console.log('====================================');
-  console.log(`🌐 Port: ${port}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🏥 Health check: http://localhost:${port}/health`);
-  console.log(`🚀 API root: http://localhost:${port}/`);
-  console.log(`🔐 Auth: http://localhost:${port}/api/auth/login`);
+  console.log(` Port: ${port}`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` Health check: http://localhost:${port}/health`);
+  console.log(` API root: http://localhost:${port}/`);
+  console.log(`Auth: http://localhost:${port}/api/auth/login`);
   console.log('====================================\n');
 });
